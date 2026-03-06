@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cobroya
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: MP_CURRENCY
+        value: ARS
+      - key: PORT
+        value: "3000"
