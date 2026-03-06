@@ -163,6 +163,62 @@ Each package wraps the CobroYa core with platform-specific configuration. See th
 
 ---
 
+## AI Framework Adapters
+
+### LangChain (Python)
+
+```bash
+pip install langchain-mercadopago
+```
+
+```python
+from langchain_mercadopago import create_mercadopago_tools
+
+tools = create_mercadopago_tools("APP_USR-...")
+
+# Use with any LangChain agent
+from langchain.agents import initialize_agent, AgentType
+from langchain_openai import ChatOpenAI
+
+agent = initialize_agent(
+    tools=tools,
+    llm=ChatOpenAI(model="gpt-4"),
+    agent=AgentType.OPENAI_FUNCTIONS,
+)
+agent.run("Create a payment link for $5000 for a Python course")
+```
+
+[PyPI](https://pypi.org/project/langchain-mercadopago/)
+
+### OpenAI Function Calling (TypeScript)
+
+```bash
+npm install openai-mercadopago
+```
+
+```typescript
+import { createMercadoPagoExecutor } from "openai-mercadopago";
+
+const executor = createMercadoPagoExecutor(process.env.MERCADO_PAGO_ACCESS_TOKEN!);
+
+// Pass executor.definitions to OpenAI's tools parameter
+const response = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages,
+  tools: executor.definitions,
+});
+
+// Execute the tool call
+const result = await executor.handleToolCall(
+  toolCall.function.name,
+  JSON.parse(toolCall.function.arguments),
+);
+```
+
+[npm](https://www.npmjs.com/package/openai-mercadopago)
+
+---
+
 ## Programmatic Usage
 
 Install as a dependency:

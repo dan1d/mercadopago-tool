@@ -12,3 +12,5 @@ Thumbs.db
 *.swp
 *.swo
 coverage/
+social-posts/
+tareas-pendientes/
