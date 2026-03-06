@@ -60,7 +60,7 @@ footer a:hover{color:var(--accent)}
     <h1>Terminos de Servicio</h1>
     <span class="date">Ultima actualizacion: marzo 2026</span>
 
-    <p>Estos terminos de servicio ("Terminos") regulan el uso de CobroYa (<a href="https://cobroya.app">cobroya.app</a>), una herramienta open source desarrollada por <strong>dan1d</strong> que permite generar links de pago de Mercado Pago a traves de Telegram, WhatsApp y agentes de inteligencia artificial. Al usar CobroYa, aceptas estos Terminos.</p>
+    <p>Estos terminos de servicio ("Terminos") regulan el uso de CobroYa (<a href="https://cobroya.app">cobroya.app</a>), una herramienta open source desarrollada por <strong>Daniel Alejandro Dominguez Diaz</strong> que permite generar links de pago de Mercado Pago a traves de Telegram, WhatsApp y agentes de inteligencia artificial. Al usar CobroYa, aceptas estos Terminos.</p>
 
     <h2><span class="section-num">1.</span> Descripcion del servicio</h2>
     <p>CobroYa es una herramienta de codigo abierto (licencia MIT) que actua como intermediario entre el usuario y la API de Mercado Pago. Sus funciones principales incluyen:</p>
@@ -109,7 +109,7 @@ footer a:hover{color:var(--accent)}
     </ul>
 
     <h2><span class="section-num">6.</span> Limitacion de responsabilidad</h2>
-    <p>En la maxima medida permitida por la ley aplicable, <strong>dan1d</strong> y los colaboradores de CobroYa no seran responsables por ningun dano directo, indirecto, incidental, especial, consecuente o punitivo, incluyendo pero no limitado a:</p>
+    <p>En la maxima medida permitida por la ley aplicable, <strong>Daniel Alejandro Dominguez Diaz</strong> y los colaboradores de CobroYa no seran responsables por ningun dano directo, indirecto, incidental, especial, consecuente o punitivo, incluyendo pero no limitado a:</p>
     <ul>
       <li>Perdida de ingresos o beneficios</li>
       <li>Perdida de datos</li>
@@ -123,7 +123,7 @@ footer a:hover{color:var(--accent)}
     <p>CobroYa es un proyecto open source mantenido de forma voluntaria. No asumimos obligacion de mantener, actualizar o dar soporte al servicio. El servicio puede ser modificado, suspendido o descontinuado en cualquier momento sin previo aviso.</p>
 
     <h2><span class="section-num">8.</span> Propiedad intelectual</h2>
-    <p>El codigo fuente de CobroYa esta disponible bajo licencia MIT en <a href="https://github.com/dan1d/mercadopago-tool" target="_blank" rel="noopener">GitHub</a>. El nombre "CobroYa", el logo y la marca son propiedad de <strong>dan1d</strong>.</p>
+    <p>El codigo fuente de CobroYa esta disponible bajo licencia MIT en <a href="https://github.com/dan1d/mercadopago-tool" target="_blank" rel="noopener">GitHub</a>. El nombre "CobroYa", el logo y la marca son propiedad de <strong>Daniel Alejandro Dominguez Diaz</strong>.</p>
 
     <h2><span class="section-num">9.</span> Cambios a estos terminos</h2>
     <p>Nos reservamos el derecho de modificar estos Terminos en cualquier momento. La fecha de ultima actualizacion se indica al inicio del documento. El uso continuado del servicio despues de cualquier modificacion constituye la aceptacion de los nuevos Terminos.</p>

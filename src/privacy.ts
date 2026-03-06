@@ -60,7 +60,7 @@ footer a:hover{color:var(--accent)}
     <h1>Politica de Privacidad</h1>
     <span class="date">Ultima actualizacion: marzo 2026</span>
 
-    <p>En CobroYa (<a href="https://cobroya.app">cobroya.app</a>) nos tomamos la privacidad en serio. Esta politica explica de forma clara y honesta que datos manejamos, como los usamos y que derechos tenes como usuario. CobroYa es un proyecto open source desarrollado por <strong>dan1d</strong>.</p>
+    <p>En CobroYa (<a href="https://cobroya.app">cobroya.app</a>) nos tomamos la privacidad en serio. Esta politica explica de forma clara y honesta que datos manejamos, como los usamos y que derechos tenes como usuario. CobroYa es un proyecto open source desarrollado por <strong>Daniel Alejandro Dominguez Diaz</strong>.</p>
 
     <h2><span class="section-num">1.</span> Datos que recopilamos</h2>
     <p>CobroYa recopila y procesa la minima cantidad de datos necesaria para funcionar:</p>

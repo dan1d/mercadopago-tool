@@ -244,7 +244,7 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
 
 <footer>
   <div class="container">
-    CobroYa &mdash; Cobra facil con Mercado Pago &middot; <a href="/privacy">Privacidad</a> &middot; <a href="/terms">Terminos</a> &middot; <a href="mailto:hola@cobroya.app">hola@cobroya.app</a>
+    &copy; ${new Date().getFullYear()} Daniel Alejandro Dominguez Diaz &mdash; CobroYa &middot; <a href="/privacy">Privacidad</a> &middot; <a href="/terms">Terminos</a> &middot; <a href="mailto:hola@cobroya.app">hola@cobroya.app</a> &middot; <a href="https://dan1d.dev" target="_blank" rel="noopener">dan1d.dev</a>
   </div>
 </footer>
 
