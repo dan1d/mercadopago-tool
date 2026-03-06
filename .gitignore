@@ -12,5 +12,7 @@ Thumbs.db
 *.swp
 *.swo
 coverage/
+__pycache__/
+*.pyc
 social-posts/
 tareas-pendientes/
