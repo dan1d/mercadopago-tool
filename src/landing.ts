@@ -5,6 +5,17 @@ export const landingHTML = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CobroYa — Cobra por Telegram y WhatsApp con Mercado Pago</title>
 <meta name="description" content="Genera links de pago de Mercado Pago desde Telegram y WhatsApp. Sin codigo, sin web, sin complicaciones. Cobra en 10 segundos.">
+<meta property="og:title" content="CobroYa — Cobra con Mercado Pago en 10 segundos">
+<meta property="og:description" content="Genera links de pago desde Telegram y WhatsApp. Sin web, sin codigo, sin complicaciones.">
+<meta property="og:image" content="https://cobroya.app/og.svg">
+<meta property="og:url" content="https://cobroya.app">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CobroYa">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CobroYa — Cobra con Mercado Pago en 10 segundos">
+<meta name="twitter:description" content="Genera links de pago desde Telegram y WhatsApp. Sin web, sin codigo.">
+<meta name="twitter:image" content="https://cobroya.app/og.svg">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A1;</text></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#09090b;--card:#18181b;--border:#27272a;--text:#fafafa;--muted:#a1a1aa;--accent:#3b82f6;--accent2:#8b5cf6;--green:#22c55e}

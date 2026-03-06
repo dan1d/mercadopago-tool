@@ -137,6 +137,27 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const path = url.pathname;
 
+  // OG Image (SVG)
+  if (path === "/og.svg") {
+    const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="630" fill="#09090b"/>
+      <rect x="0" y="0" width="1200" height="4" fill="url(#g)"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>
+      <text x="100" y="200" font-family="system-ui,sans-serif" font-size="72" font-weight="800" fill="#fafafa">CobroYa</text>
+      <text x="100" y="300" font-family="system-ui,sans-serif" font-size="42" fill="#a1a1aa">Cobra con Mercado Pago</text>
+      <text x="100" y="360" font-family="system-ui,sans-serif" font-size="42" fill="#a1a1aa">en 10 segundos</text>
+      <text x="100" y="460" font-family="system-ui,sans-serif" font-size="28" fill="#3b82f6">Telegram</text>
+      <text x="310" y="460" font-family="system-ui,sans-serif" font-size="28" fill="#27272a">|</text>
+      <text x="350" y="460" font-family="system-ui,sans-serif" font-size="28" fill="#22c55e">WhatsApp</text>
+      <text x="590" y="460" font-family="system-ui,sans-serif" font-size="28" fill="#27272a">|</text>
+      <text x="630" y="460" font-family="system-ui,sans-serif" font-size="28" fill="#8b5cf6">AI Agents</text>
+      <text x="100" y="550" font-family="system-ui,sans-serif" font-size="22" fill="#52525b">cobroya.app</text>
+    </svg>`;
+    res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" });
+    res.end(svg);
+    return;
+  }
+
   // Landing page
   if (path === "/") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
