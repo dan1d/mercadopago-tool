@@ -1,13 +1,45 @@
 {
-  "name": "mercadopago-tool",
+  "name": "cobroya",
   "version": "1.0.0",
-  "description": "Mercado Pago tool connector for AI agents",
+  "description": "Mercado Pago payment links from Telegram, WhatsApp, and AI agents. Cobra en 10 segundos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
+    "cobroya-mcp": "./bin/mcp-server.mjs",
+    "cobroya-telegram": "./bin/telegram-bot.mjs",
     "mercadopago-mcp": "./bin/mcp-server.mjs",
     "mercadopago-telegram": "./bin/telegram-bot.mjs"
   },
+  "keywords": [
+    "mercadopago",
+    "payments",
+    "telegram",
+    "whatsapp",
+    "mcp",
+    "ai-agents",
+    "argentina",
+    "latam",
+    "checkout"
+  ],
+  "author": "dan1d",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dan1d/mercadopago-tool.git"
+  },
+  "homepage": "https://cobroya.app",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
