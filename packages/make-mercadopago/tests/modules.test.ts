@@ -86,6 +86,17 @@ describe("Modules", () => {
       ).rejects.toThrow("quantity is required");
     });
 
+    it("should throw if currency is missing", async () => {
+      await expect(
+        createPaymentPreference(client, {
+          title: "Test",
+          quantity: 1,
+          currency: "",
+          unitPrice: 10,
+        })
+      ).rejects.toThrow("currency is required");
+    });
+
     it("should throw if unitPrice is negative", async () => {
       await expect(
         createPaymentPreference(client, {
@@ -156,6 +167,20 @@ describe("Modules", () => {
       expect(url).toContain("limit=10");
       expect(url).toContain("offset=5");
     });
+
+    it("should include external_reference in query", async () => {
+      const fetchMock = mockFetch({
+        results: [],
+        paging: { total: 0, limit: 30, offset: 0 },
+      });
+
+      await searchPayments(client, {
+        externalReference: "order-abc",
+      });
+
+      const url = fetchMock.mock.calls[0][0] as string;
+      expect(url).toContain("external_reference=order-abc");
+    });
   });
 
   describe("createRefund", () => {
@@ -181,6 +206,10 @@ describe("Modules", () => {
 
     it("should throw if paymentId is missing", async () => {
       await expect(createRefund(client, "")).rejects.toThrow("paymentId is required");
+    });
+
+    it("should throw if paymentId is not numeric", async () => {
+      await expect(createRefund(client, "abc-def")).rejects.toThrow("paymentId must be numeric");
     });
   });
 

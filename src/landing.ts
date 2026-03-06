@@ -244,7 +244,7 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
 
 <footer>
   <div class="container">
-    CobroYa &mdash; Cobra facil con Mercado Pago &middot; <a href="mailto:hola@cobroya.app">hola@cobroya.app</a>
+    CobroYa &mdash; Cobra facil con Mercado Pago &middot; <a href="/privacy">Privacidad</a> &middot; <a href="/terms">Terminos</a> &middot; <a href="mailto:hola@cobroya.app">hola@cobroya.app</a>
   </div>
 </footer>
 

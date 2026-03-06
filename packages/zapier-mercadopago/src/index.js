@@ -7,6 +7,7 @@ const createRefund = require('./creates/create_refund');
 
 const findPayment = require('./searches/find_payment');
 const searchPayments = require('./searches/search_payments');
+const getMerchantInfo = require('./searches/get_merchant_info');
 
 const paymentUpdated = require('./triggers/payment_updated');
 
@@ -28,6 +29,7 @@ module.exports = {
   searches: {
     [findPayment.key]: findPayment,
     [searchPayments.key]: searchPayments,
+    [getMerchantInfo.key]: getMerchantInfo,
   },
 
   triggers: {

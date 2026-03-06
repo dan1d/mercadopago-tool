@@ -55,6 +55,13 @@ describe("shared/formatting", () => {
       expect(friendlyError(err)).toContain("500");
     });
 
+    it("does not leak raw body for non-standard status codes", () => {
+      const err = new MercadoPagoError("GET", "/x", 503, "sensitive internal details");
+      const msg = friendlyError(err);
+      expect(msg).toContain("503");
+      expect(msg).not.toContain("sensitive internal details");
+    });
+
     it("handles regular Error", () => {
       expect(friendlyError(new Error("boom"))).toBe("Error: boom");
     });

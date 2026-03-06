@@ -1,0 +1,39 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#09090b"/>
+      <stop offset="100%" stop-color="#18181b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="dollar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1024" height="8" rx="4" fill="url(#accent)"/>
+
+  <!-- Dollar sign circle -->
+  <circle cx="512" cy="420" r="200" fill="none" stroke="url(#accent)" stroke-width="12"/>
+
+  <!-- Dollar sign $ -->
+  <text x="512" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="280" font-weight="800" fill="url(#dollar)" text-anchor="middle" dominant-baseline="central">$</text>
+
+  <!-- CobroYa text -->
+  <text x="512" y="720" font-family="system-ui, -apple-system, sans-serif" font-size="140" font-weight="800" fill="#fafafa" text-anchor="middle">CobroYa</text>
+
+  <!-- Tagline -->
+  <text x="512" y="810" font-family="system-ui, -apple-system, sans-serif" font-size="52" fill="#71717a" text-anchor="middle">Cobra en 10 segundos</text>
+
+  <!-- Bottom dots (Telegram / WhatsApp / AI) -->
+  <circle cx="400" cy="900" r="16" fill="#3b82f6"/>
+  <circle cx="512" cy="900" r="16" fill="#22c55e"/>
+  <circle cx="624" cy="900" r="16" fill="#8b5cf6"/>
+</svg>

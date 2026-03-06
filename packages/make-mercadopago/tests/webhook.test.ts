@@ -227,6 +227,56 @@ describe("createPaymentWebhookHandler", () => {
     }
   });
 
+  it("should return 400 for invalid JSON body", async () => {
+    const handler = createPaymentWebhookHandler({
+      accessToken: "tok",
+      onPayment,
+    });
+
+    const req = new Request("https://example.com/webhook", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not-json{{{",
+    });
+    const res = await handler(req);
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Invalid JSON");
+  });
+
+  it("should return 500 when fetching payment from API fails", async () => {
+    mockFetch({ message: "not_found" }, 404);
+
+    const handler = createPaymentWebhookHandler({
+      accessToken: "tok",
+      onPayment,
+    });
+
+    const req = makeRequest({ type: "payment", data: { id: "99999" } });
+    const res = await handler(req);
+
+    expect(res.status).toBe(500);
+    expect(onPayment).not.toHaveBeenCalled();
+  });
+
+  it("should return 500 when onPayment callback throws", async () => {
+    mockFetch(MOCK_PAYMENT);
+    const failingCallback = vi.fn().mockRejectedValue(new Error("callback failed"));
+
+    const handler = createPaymentWebhookHandler({
+      accessToken: "tok",
+      onPayment: failingCallback,
+    });
+
+    const req = makeRequest({ type: "payment", data: { id: "12345" } });
+    const res = await handler(req);
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe("callback failed");
+  });
+
   it("should handle missing data.id gracefully", async () => {
     const handler = createPaymentWebhookHandler({
       accessToken: "tok",

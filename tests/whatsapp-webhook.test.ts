@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createHmac } from "node:crypto";
 import { createWhatsAppWebhookHandler } from "../src/whatsapp/webhook.js";
 
 const mockFetch = vi.fn();
@@ -256,6 +257,152 @@ describe("WhatsApp Webhook", () => {
 
       const res = await handler(req);
       // Webhook still returns 200 even though the handler errored
+      expect(res.status).toBe(200);
+    });
+
+    it("logs error to console.error when command handler throws", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValueOnce(new Error("MP API down"));
+
+      const body = {
+        object: "whatsapp_business_account",
+        entry: [
+          {
+            changes: [
+              {
+                value: {
+                  messages: [
+                    { from: "549111", id: "wamid.6", timestamp: "1", type: "text", text: { body: "pagos" } },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      await handler(req);
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[whatsapp]"),
+        expect.any(Error)
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
+  // ─── X-Hub-Signature-256 validation ─────────────────────
+
+  describe("X-Hub-Signature-256 validation", () => {
+    const appSecret = "test_meta_app_secret_123";
+
+    function signedPostRequest(body: unknown, secret: string = appSecret) {
+      const rawBody = JSON.stringify(body);
+      const signature =
+        "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+      return new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hub-signature-256": signature,
+        },
+        body: rawBody,
+      });
+    }
+
+    const validPayload = {
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  {
+                    from: "549111",
+                    id: "wamid.sig1",
+                    timestamp: "1",
+                    type: "text",
+                    text: { body: "ayuda" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    it("returns 200 and processes message with valid signature", async () => {
+      const signedHandler = createWhatsAppWebhookHandler({
+        ...baseConfig,
+        appSecret,
+      });
+
+      mockFetch.mockResolvedValue(
+        jsonResponse({ messages: [{ id: "ok" }] })
+      );
+
+      const res = await signedHandler(signedPostRequest(validPayload));
+      expect(res.status).toBe(200);
+      // Handler should have sent a WA message (ayuda triggers help response)
+      expect(mockFetch).toHaveBeenCalled();
+    });
+
+    it("returns 401 with invalid signature", async () => {
+      const signedHandler = createWhatsAppWebhookHandler({
+        ...baseConfig,
+        appSecret,
+      });
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hub-signature-256": "sha256=invalid_signature_hex_value_abcdef0123456789",
+        },
+        body: JSON.stringify(validPayload),
+      });
+
+      const res = await signedHandler(req);
+      expect(res.status).toBe(401);
+    });
+
+    it("returns 401 when signature header is missing and appSecret is configured", async () => {
+      const signedHandler = createWhatsAppWebhookHandler({
+        ...baseConfig,
+        appSecret,
+      });
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validPayload),
+      });
+
+      const res = await signedHandler(req);
+      expect(res.status).toBe(401);
+    });
+
+    it("skips validation when appSecret is not configured (backward compatible)", async () => {
+      // handler from beforeEach has no appSecret
+      mockFetch.mockResolvedValue(
+        jsonResponse({ messages: [{ id: "ok" }] })
+      );
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validPayload),
+      });
+
+      const res = await handler(req);
       expect(res.status).toBe(200);
     });
   });

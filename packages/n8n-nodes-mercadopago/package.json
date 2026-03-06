@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "n8n community node for Mercado Pago payments",
   "license": "MIT",
-  "homepage": "",
-  "author": { "name": "mercadopago-tool" },
-  "repository": { "type": "git", "url": "" },
+  "homepage": "https://cobroya.app",
+  "author": "dan1d",
+  "repository": { "type": "git", "url": "https://github.com/dan1d/mercadopago-tool" },
   "main": "index.js",
   "keywords": ["n8n-community-node-package", "n8n", "mercadopago", "payments"],
   "n8n": {
@@ -14,14 +14,16 @@
     "nodes": ["dist/nodes/MercadoPago/MercadoPago.node.js"]
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp nodes/MercadoPago/mercadopago.svg nodes/MercadoPago/MercadoPago.node.json dist/nodes/MercadoPago/",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run"
   },
   "files": ["dist"],
   "devDependencies": {
     "n8n-workflow": "^1.0.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
   },
   "peerDependencies": {
     "n8n-workflow": "*"

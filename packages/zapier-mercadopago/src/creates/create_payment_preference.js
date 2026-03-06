@@ -1,13 +1,18 @@
 'use strict';
 
 const perform = async (z, bundle) => {
+  const price = parseFloat(bundle.inputData.unit_price);
+  if (isNaN(price) || price <= 0) {
+    throw new Error('unit_price must be a positive number');
+  }
+
   const body = {
     items: [
       {
         title: bundle.inputData.title,
         quantity: bundle.inputData.quantity || 1,
         currency_id: bundle.inputData.currency || 'ARS',
-        unit_price: parseFloat(bundle.inputData.unit_price),
+        unit_price: price,
       },
     ],
   };

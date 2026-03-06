@@ -1,33 +1,178 @@
 # make-mercadopago
 
-A Make.com integration starter package for Mercado Pago payments. Provides typed modules, webhook handling, and scenario templates to accelerate building custom Make.com apps with the Mercado Pago API.
+A Make.com (formerly Integromat) custom app starter for Mercado Pago payments, part of the [CobroYa](https://cobroya.app) project. Provides typed modules, webhook handling, and scenario templates to accelerate building custom Make.com apps with the Mercado Pago API.
 
-## Setup
+**Repository:** [github.com/dan1d/mercadopago-tool](https://github.com/dan1d/mercadopago-tool)
+
+## Quick Start
 
 ```bash
 npm install
 npm run build
+npm test
 ```
 
-## Required Environment Variables
+## Operations
+
+This package implements 5 Mercado Pago operations plus webhook handling:
+
+| Operation | Function | MP Endpoint | Make.com Component |
+|---|---|---|---|
+| Create Payment Preference | `createPaymentPreference` | `POST /checkout/preferences` | Action |
+| Get Payment | `getPayment` | `GET /v1/payments/:id` | Action / Search |
+| Search Payments | `searchPayments` | `GET /v1/payments/search` | Search |
+| Create Refund | `createRefund` | `POST /v1/payments/:id/refunds` | Action |
+| Get Merchant Info | `getMerchantInfo` | `GET /users/me` | Action |
+| Payment Webhook | `createPaymentWebhookHandler` | IPN listener | Instant Trigger |
+
+## Required Configuration
 
 | Variable | Required | Description |
 |---|---|---|
-| `MERCADO_PAGO_ACCESS_TOKEN` | Yes | Your Mercado Pago access token from the developer dashboard |
-| `MERCADO_PAGO_WEBHOOK_SECRET` | No | Secret key for validating webhook signatures |
+| `MERCADO_PAGO_ACCESS_TOKEN` | Yes | Your Mercado Pago access token from the [developer dashboard](https://www.mercadopago.com/developers/panel/app) |
+| `MERCADO_PAGO_WEBHOOK_SECRET` | No | Secret key for validating webhook HMAC-SHA256 signatures |
 
-## Webhook Configuration
+## Make.com Custom App Setup
 
-1. Go to [Mercado Pago Developer Dashboard](https://www.mercadopago.com/developers/panel/app)
+### 1. Create a Connection
+
+In the Make.com custom app editor, define a connection using API Key authentication:
+
+- **Type:** API Key (Bearer Token)
+- **Field:** `accessToken` (label: "Mercado Pago Access Token")
+- **Header:** `Authorization: Bearer {{connection.accessToken}}`
+
+The `MakeClient` class in this package demonstrates the exact auth pattern: all requests to `https://api.mercadopago.com` include a `Bearer` token in the `Authorization` header.
+
+### 2. Define Modules
+
+Each exported function maps to a Make.com module. Below are the input/output field definitions for each:
+
+#### Create Payment Preference (Action)
+
+**Input fields:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | text | Yes | Product or service name |
+| `quantity` | number | Yes | Quantity (must be >= 1) |
+| `currency` | text | Yes | Currency code (e.g., ARS, BRL, MXN, USD) |
+| `unitPrice` | number | Yes | Price per unit (must be > 0) |
+| `backUrls.success` | url | No | Redirect URL on successful payment |
+| `backUrls.failure` | url | No | Redirect URL on failed payment |
+| `backUrls.pending` | url | No | Redirect URL on pending payment |
+| `notificationUrl` | url | No | Webhook URL for IPN notifications |
+| `externalReference` | text | No | Your internal order/reference ID |
+
+**Output fields:**
+| Field | Type | Description |
+|---|---|---|
+| `preference_id` | text | Mercado Pago preference ID |
+| `init_point` | url | Production checkout URL (redirect buyer here) |
+| `sandbox_init_point` | url | Sandbox checkout URL for testing |
+
+**Communication (HTTP call):**
+```
+POST https://api.mercadopago.com/checkout/preferences
+Content-Type: application/json
+Authorization: Bearer {{connection.accessToken}}
+```
+
+#### Get Payment (Action)
+
+**Input fields:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `paymentId` | number | Yes | Mercado Pago payment ID |
+
+**Output fields:** Full payment object from the API (id, status, status_detail, transaction_amount, currency_id, payer, etc.)
+
+**Communication:**
+```
+GET https://api.mercadopago.com/v1/payments/{{paymentId}}
+Authorization: Bearer {{connection.accessToken}}
+```
+
+#### Search Payments (Search)
+
+**Input fields:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `status` | select | No | Filter by status: approved, pending, rejected, etc. |
+| `externalReference` | text | No | Filter by your external reference ID |
+| `sort` | text | No | Sort field (e.g., date_created) |
+| `criteria` | select | No | Sort order: asc or desc |
+| `limit` | number | No | Results per page (default 30) |
+| `offset` | number | No | Pagination offset |
+
+**Output fields:**
+| Field | Type | Description |
+|---|---|---|
+| `results` | array | Array of payment objects |
+| `paging.total` | number | Total matching payments |
+| `paging.limit` | number | Results per page |
+| `paging.offset` | number | Current offset |
+
+**Communication:**
+```
+GET https://api.mercadopago.com/v1/payments/search?status={{status}}&limit={{limit}}
+Authorization: Bearer {{connection.accessToken}}
+```
+
+#### Create Refund (Action)
+
+**Input fields:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `paymentId` | number | Yes | Payment ID to refund |
+| `amount` | number | No | Partial refund amount (omit for full refund) |
+
+**Communication:**
+```
+POST https://api.mercadopago.com/v1/payments/{{paymentId}}/refunds
+Content-Type: application/json
+Authorization: Bearer {{connection.accessToken}}
+```
+
+#### Get Merchant Info (Action)
+
+No input fields required. Returns the authenticated merchant's profile (id, nickname, email, site_id, etc.).
+
+**Communication:**
+```
+GET https://api.mercadopago.com/users/me
+Authorization: Bearer {{connection.accessToken}}
+```
+
+### 3. Set Up the Webhook (Instant Trigger)
+
+The webhook module receives real-time payment notifications from Mercado Pago via IPN (Instant Payment Notification).
+
+**Configuration steps:**
+
+1. Go to the [Mercado Pago Developer Dashboard](https://www.mercadopago.com/developers/panel/app)
 2. Select your application
 3. Navigate to Webhooks (IPN) settings
-4. Set the notification URL to your server endpoint (e.g., `https://your-domain.com/webhook`)
+4. Set the notification URL to the Make.com webhook URL (provided when you create the Instant Trigger)
 5. Select "Payments" as the event type
 6. Save the configuration
 
-The webhook handler validates incoming notifications, fetches the full payment data from the API, and delivers a normalized payload to your callback.
+**Webhook output (normalized):**
+| Field | Type | Description |
+|---|---|---|
+| `payment_id` | number | Payment ID |
+| `status` | text | Payment status (approved, pending, rejected, etc.) |
+| `status_detail` | text | Detailed status (accredited, pending_contingency, etc.) |
+| `transaction_amount` | number | Payment amount |
+| `currency_id` | text | Currency code |
+| `external_reference` | text | Your external reference (or null) |
+| `date_created` | date | When the payment was created |
+| `date_approved` | date | When the payment was approved (or null) |
+| `payer_email` | email | Payer's email address |
+| `description` | text | Payment description |
 
-## Usage
+The handler validates the incoming IPN notification, optionally verifies the HMAC-SHA256 signature (if `secret` is configured), fetches the full payment data from the API, and delivers a normalized payload.
+
+## Usage Examples
 
 ### Basic Client
 
@@ -104,59 +249,35 @@ const client = new MakeClient(process.env.MERCADO_PAGO_ACCESS_TOKEN!);
 await createRefund(client, 12345678);
 
 // Partial refund
-await createRefund(client, 12345678, 500.00);
+await createRefund(client, 12345678, 500.0);
 ```
 
-## Example Make Scenarios
+## Example Make.com Scenarios
 
-### 1. New Payment Approved -> Send Telegram Message
+1. **Payment Approved -> Telegram Message:** Webhook trigger receives payment notification. A filter checks `status === "approved"`. The Telegram module sends: "New payment of {{currency}} {{amount}} from {{payer_email}}".
 
-Webhook trigger receives payment notification. A filter checks `status === "approved"`. The Telegram module sends a message: "New payment of {{currency}} {{amount}} from {{payer_email}}".
+2. **Payment Approved -> WhatsApp Confirmation:** Same webhook trigger with approval filter. WhatsApp Business module sends a template message with payment details.
 
-### 2. New Payment Approved -> Send WhatsApp Confirmation
+3. **Payment Approved -> Google Sheets Row:** Webhook trigger appends a row with: payment_id, date, amount, currency, payer_email, status, external_reference.
 
-Same webhook trigger with approval filter. The WhatsApp Business module sends a template message to the payer's phone number with the payment details and receipt link.
+4. **Form Submission -> Payment Link:** A form triggers the scenario. "Create Payment Preference" generates a checkout link. An email module sends the link to the customer.
 
-### 3. New Payment Approved -> Add Row to Google Sheets
+5. **Manual Refund:** A manual trigger or scheduled search finds payments. "Create Refund" processes the refund. A notification module alerts the team.
 
-Webhook trigger fires on new payment. A Google Sheets module appends a row with: payment_id, date, amount, currency, payer_email, status, external_reference.
+## Scenario Templates
 
-### 4. Create Payment Preference from Form Submission
+The `src/templates/` directory contains JSON blueprints that can be imported into Make.com:
 
-A form submission (Typeform, Google Forms, or Make webhook) triggers the scenario. The "Create Payment Preference" module generates a checkout link. An email or messaging module sends the payment link to the customer.
-
-### 5. Refund Payment Manually from Make
-
-A manual trigger or scheduled search finds payments matching specific criteria. The "Create Refund" module processes the refund. A notification module alerts the team.
-
-## How to Adapt This into a Full Make Custom App
-
-Each module in this package maps directly to a Make.com custom app component:
-
-| This Package | Make Custom App Component | Description |
-|---|---|---|
-| `createPaymentPreference` | **Action** | Creates a payment preference and returns the checkout URL |
-| `getPayment` | **Action** / **Search** | Fetches a single payment by ID |
-| `searchPayments` | **Search** | Queries payments with filters, returns paginated results |
-| `createRefund` | **Action** | Issues a full or partial refund on a payment |
-| `getMerchantInfo` | **Action** | Retrieves the authenticated merchant's profile |
-| `createPaymentWebhookHandler` | **Instant Trigger** (Webhook) | Listens for real-time payment notifications from Mercado Pago |
-| `verifyWebhookSignature` | Part of the Instant Trigger | Validates that webhook requests are authentic |
-
-### Steps to create the Make custom app:
-
-1. **Connection**: Use OAuth2 or API Key authentication. The `MakeClient` constructor shows what is needed: a single access token passed as Bearer auth.
-
-2. **Modules**: Each exported function becomes a Make module. Define input fields (the function parameters) and output fields (the return type) in the Make module editor.
-
-3. **Webhooks**: Register `createPaymentWebhookHandler` as an Instant Trigger. Make will provide the webhook URL; configure it in the Mercado Pago dashboard.
-
-4. **Communication**: The `MakeClient` methods (`get`, `post`) show the exact HTTP calls. Translate these into Make's communication tab using their `rpc://` or direct HTTP configuration.
-
-5. **Templates**: The JSON files in `src/templates/` provide starting points for scenario blueprints that users can import.
+- `payment-updated-webhook.json` - Webhook trigger configuration for payment notifications
+- `create-payment-link-flow.json` - Flow to create a payment preference from form input
 
 ## Running Tests
 
 ```bash
-npm test
+npm test          # Run all 49 tests
+npm run build     # Compile TypeScript to dist/
 ```
+
+## License
+
+MIT

@@ -887,6 +887,86 @@ describe("server.ts — listen callback without WA_NOTIFY_PHONE", () => {
   });
 });
 
+describe("server.ts — PORT NaN fallback", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    mockStartBot.mockReset();
+    mockCreateWhatsAppWebhookHandler.mockReset();
+    mockCreateWebhookHandler.mockReset();
+    mockServer.listen.mockClear();
+
+    vi.stubEnv("PORT", "abc");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "");
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "");
+    vi.stubEnv("TELEGRAM_NOTIFY_CHAT_ID", "");
+    vi.stubEnv("WHATSAPP_ACCESS_TOKEN", "");
+    vi.stubEnv("WHATSAPP_PHONE_NUMBER_ID", "");
+    vi.stubEnv("WHATSAPP_VERIFY_TOKEN", "");
+    vi.stubEnv("WA_NOTIFY_PHONE", "");
+    vi.stubEnv("WHATSAPP_ALLOWED_PHONES", "");
+    vi.stubEnv("MERCADO_PAGO_WEBHOOK_SECRET", "");
+    vi.stubEnv("MP_CURRENCY", "");
+    vi.stubEnv("MP_SUCCESS_URL", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("falls back to port 3000 when PORT is non-numeric", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    await import("../src/server.js");
+
+    expect(mockServer.listen).toHaveBeenCalledWith(3000, expect.any(Function));
+  });
+});
+
+describe("server.ts — body size limit (413)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    mockStartBot.mockReset();
+    mockCreateWhatsAppWebhookHandler.mockReset();
+    mockCreateWebhookHandler.mockReset();
+    mockServer.listen.mockClear();
+
+    vi.stubEnv("PORT", "3000");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "token");
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "");
+    vi.stubEnv("TELEGRAM_NOTIFY_CHAT_ID", "");
+    vi.stubEnv("WHATSAPP_ACCESS_TOKEN", "wa-token");
+    vi.stubEnv("WHATSAPP_PHONE_NUMBER_ID", "wa-phone");
+    vi.stubEnv("WHATSAPP_VERIFY_TOKEN", "wa-verify");
+    vi.stubEnv("WA_NOTIFY_PHONE", "");
+    vi.stubEnv("WHATSAPP_ALLOWED_PHONES", "");
+    vi.stubEnv("MERCADO_PAGO_WEBHOOK_SECRET", "");
+    vi.stubEnv("MP_CURRENCY", "");
+    vi.stubEnv("MP_SUCCESS_URL", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns 413 when request body exceeds 1MB", async () => {
+    mockCreateWhatsAppWebhookHandler.mockReturnValue(vi.fn());
+    mockCreateWebhookHandler.mockImplementation((opts: any) => vi.fn());
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await import("../src/server.js");
+
+    // Create a body larger than 1MB
+    const largeBody = "x".repeat(1024 * 1024 + 1);
+    const req = mockReq("POST", "/whatsapp", largeBody);
+    const res = mockRes();
+    await serverHandler(req, res);
+
+    expect(res.writeHead).toHaveBeenCalledWith(413);
+    expect(res.end).toHaveBeenCalledWith("Payload Too Large");
+  });
+});
+
 describe("server.ts — nodeToWebRequest builds correct Request objects", () => {
   beforeEach(() => {
     vi.resetModules();

@@ -78,11 +78,12 @@ export async function searchPayments(
   client: MercadoPagoClient,
   params?: SearchPaymentsParams
 ): Promise<unknown> {
+  const safeLimit = Math.min(params?.limit ?? 30, 100);
   const query = new URLSearchParams();
   if (params?.status) query.set("status", params.status);
   if (params?.sort) query.set("sort", params.sort);
   if (params?.criteria) query.set("criteria", params.criteria);
-  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.limit) query.set("limit", String(safeLimit));
   if (params?.offset) query.set("offset", String(params.offset));
 
   const qs = query.toString();

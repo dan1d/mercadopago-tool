@@ -4,6 +4,13 @@
   "description": "Make.com integration starter for Mercado Pago payments",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "author": "dan1d",
+  "license": "MIT",
+  "homepage": "https://cobroya.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dan1d/mercadopago-tool"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run"

@@ -4,9 +4,20 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 	IDataObject,
+	IHttpRequestMethods,
+	IHttpRequestOptions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes } from 'n8n-workflow';
+
+const BASE_URL = 'https://api.mercadopago.com';
+
+function validatePaymentId(id: string): string {
+	if (!/^\d+$/.test(id)) {
+		throw new Error(`Invalid payment ID: ${id}. Must be numeric.`);
+	}
+	return id;
+}
 
 export class MercadoPago implements INodeType {
 	description: INodeTypeDescription = {
@@ -20,8 +31,8 @@ export class MercadoPago implements INodeType {
 		defaults: {
 			name: 'Mercado Pago',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'mercadoPagoApi',
@@ -405,10 +416,6 @@ export class MercadoPago implements INodeType {
 		const items = this.getInputData();
 		const returnData: IDataObject[] = [];
 
-		const credentials = await this.getCredentials('mercadoPagoApi');
-		const accessToken = credentials.accessToken as string;
-		const baseUrl = 'https://api.mercadopago.com';
-
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const resource = this.getNodeParameter('resource', i) as string;
@@ -417,15 +424,15 @@ export class MercadoPago implements INodeType {
 				let responseData: IDataObject;
 
 				if (resource === 'paymentPreference' && operation === 'create') {
-					responseData = await executePaymentPreferenceCreate.call(this, i, baseUrl, accessToken);
+					responseData = await executePaymentPreferenceCreate.call(this, i);
 				} else if (resource === 'payment' && operation === 'get') {
-					responseData = await executePaymentGet.call(this, i, baseUrl, accessToken);
+					responseData = await executePaymentGet.call(this, i);
 				} else if (resource === 'payment' && operation === 'search') {
-					responseData = await executePaymentSearch.call(this, i, baseUrl, accessToken);
+					responseData = await executePaymentSearch.call(this, i);
 				} else if (resource === 'refund' && operation === 'create') {
-					responseData = await executeRefundCreate.call(this, i, baseUrl, accessToken);
+					responseData = await executeRefundCreate.call(this, i);
 				} else if (resource === 'merchant' && operation === 'getInfo') {
-					responseData = await executeMerchantGetInfo.call(this, baseUrl, accessToken);
+					responseData = await executeMerchantGetInfo.call(this);
 				} else {
 					throw new NodeApiError(this.getNode(), {
 						message: `Unsupported resource/operation: ${resource}/${operation}`,
@@ -451,41 +458,34 @@ export class MercadoPago implements INodeType {
 
 async function mercadoPagoRequest(
 	context: IExecuteFunctions,
-	method: string,
-	url: string,
-	accessToken: string,
+	method: IHttpRequestMethods,
+	endpoint: string,
 	body?: IDataObject,
+	qs?: IDataObject,
 ): Promise<IDataObject> {
-	const options: RequestInit = {
+	const options: IHttpRequestOptions = {
 		method,
-		headers: {
-			'Authorization': `Bearer ${accessToken}`,
-			'Content-Type': 'application/json',
-		},
+		url: `${BASE_URL}${endpoint}`,
 	};
 
-	if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
-		options.body = JSON.stringify(body);
+	if (qs && Object.keys(qs).length > 0) {
+		options.qs = qs;
 	}
 
-	const response = await fetch(url, options);
-	const data = await response.json() as IDataObject;
-
-	if (!response.ok) {
-		throw new NodeApiError(context.getNode(), data as JsonObject, {
-			message: `Mercado Pago API error: ${response.status} ${response.statusText}`,
-			httpCode: String(response.status),
-		});
+	if (body && Object.keys(body).length > 0) {
+		options.body = body;
 	}
 
-	return data;
+	return await context.helpers.httpRequestWithAuthentication.call(
+		context,
+		'mercadoPagoApi',
+		options,
+	) as IDataObject;
 }
 
 async function executePaymentPreferenceCreate(
 	this: IExecuteFunctions,
 	index: number,
-	baseUrl: string,
-	accessToken: string,
 ): Promise<IDataObject> {
 	const itemsData = this.getNodeParameter('items.itemValues', index, []) as IDataObject[];
 	const additionalFields = this.getNodeParameter('additionalFields', index, {}) as IDataObject;
@@ -538,61 +538,52 @@ async function executePaymentPreferenceCreate(
 		}
 	}
 
-	return await mercadoPagoRequest(this, 'POST', `${baseUrl}/checkout/preferences`, accessToken, body);
+	return await mercadoPagoRequest(this, 'POST', '/checkout/preferences', body);
 }
 
 async function executePaymentGet(
 	this: IExecuteFunctions,
 	index: number,
-	baseUrl: string,
-	accessToken: string,
 ): Promise<IDataObject> {
-	const paymentId = this.getNodeParameter('paymentId', index) as string;
-	return await mercadoPagoRequest(this, 'GET', `${baseUrl}/v1/payments/${paymentId}`, accessToken);
+	const paymentId = validatePaymentId(this.getNodeParameter('paymentId', index) as string);
+	return await mercadoPagoRequest(this, 'GET', `/v1/payments/${paymentId}`);
 }
 
 async function executePaymentSearch(
 	this: IExecuteFunctions,
 	index: number,
-	baseUrl: string,
-	accessToken: string,
 ): Promise<IDataObject> {
 	const searchOptions = this.getNodeParameter('searchOptions', index, {}) as IDataObject;
 
-	const params = new URLSearchParams();
+	const qs: IDataObject = {};
 
 	if (searchOptions.status) {
-		params.append('status', searchOptions.status as string);
+		qs.status = searchOptions.status;
 	}
 	if (searchOptions.sort) {
-		params.append('sort', searchOptions.sort as string);
+		qs.sort = searchOptions.sort;
 	}
 	if (searchOptions.criteria) {
-		params.append('criteria', searchOptions.criteria as string);
+		qs.criteria = searchOptions.criteria;
 	}
 	if (searchOptions.limit !== undefined) {
-		params.append('limit', String(searchOptions.limit));
+		qs.limit = searchOptions.limit;
 	}
 	if (searchOptions.offset !== undefined) {
-		params.append('offset', String(searchOptions.offset));
+		qs.offset = searchOptions.offset;
 	}
 	if (searchOptions.external_reference) {
-		params.append('external_reference', searchOptions.external_reference as string);
+		qs.external_reference = searchOptions.external_reference;
 	}
 
-	const queryString = params.toString();
-	const url = `${baseUrl}/v1/payments/search${queryString ? `?${queryString}` : ''}`;
-
-	return await mercadoPagoRequest(this, 'GET', url, accessToken);
+	return await mercadoPagoRequest(this, 'GET', '/v1/payments/search', undefined, qs);
 }
 
 async function executeRefundCreate(
 	this: IExecuteFunctions,
 	index: number,
-	baseUrl: string,
-	accessToken: string,
 ): Promise<IDataObject> {
-	const paymentId = this.getNodeParameter('paymentId', index) as string;
+	const paymentId = validatePaymentId(this.getNodeParameter('paymentId', index) as string);
 	const fullRefund = this.getNodeParameter('fullRefund', index) as boolean;
 
 	const body: IDataObject = {};
@@ -605,16 +596,13 @@ async function executeRefundCreate(
 	return await mercadoPagoRequest(
 		this,
 		'POST',
-		`${baseUrl}/v1/payments/${paymentId}/refunds`,
-		accessToken,
+		`/v1/payments/${paymentId}/refunds`,
 		Object.keys(body).length > 0 ? body : undefined,
 	);
 }
 
 async function executeMerchantGetInfo(
 	this: IExecuteFunctions,
-	baseUrl: string,
-	accessToken: string,
 ): Promise<IDataObject> {
-	return await mercadoPagoRequest(this, 'GET', `${baseUrl}/users/me`, accessToken);
+	return await mercadoPagoRequest(this, 'GET', '/users/me');
 }

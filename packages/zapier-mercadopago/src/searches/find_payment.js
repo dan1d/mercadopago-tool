@@ -1,9 +1,14 @@
 'use strict';
 
 const perform = async (z, bundle) => {
+  const paymentId = bundle.inputData.payment_id;
+  if (!/^\d+$/.test(paymentId)) {
+    throw new Error('Invalid payment ID: must be numeric.');
+  }
+
   const response = await z.request({
     method: 'GET',
-    url: `https://api.mercadopago.com/v1/payments/${bundle.inputData.payment_id}`,
+    url: `https://api.mercadopago.com/v1/payments/${paymentId}`,
   });
 
   return [response.data];

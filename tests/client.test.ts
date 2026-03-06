@@ -68,6 +68,26 @@ describe("MercadoPagoClient", () => {
     );
   });
 
+  it("GET passes an AbortSignal with timeout", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ id: 1 }));
+    const client = new MercadoPagoClient("TEST_TOKEN");
+    await client.get("/v1/payments/123");
+
+    const fetchOpts = mockFetch.mock.calls[0][1];
+    expect(fetchOpts.signal).toBeDefined();
+    expect(fetchOpts.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("POST passes an AbortSignal with timeout", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ id: "pref_1" }));
+    const client = new MercadoPagoClient("TEST_TOKEN");
+    await client.post("/checkout/preferences", { items: [] });
+
+    const fetchOpts = mockFetch.mock.calls[0][1];
+    expect(fetchOpts.signal).toBeDefined();
+    expect(fetchOpts.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it("throws MercadoPagoError on non-OK GET response", async () => {
     mockFetch.mockResolvedValueOnce(new Response("Not Found", { status: 404 }));
     const client = new MercadoPagoClient("TEST_TOKEN");

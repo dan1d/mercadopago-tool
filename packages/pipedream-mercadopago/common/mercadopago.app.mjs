@@ -73,6 +73,9 @@ export default {
     async getPayment({
       $, paymentId,
     }) {
+      if (!/^\d+$/.test(paymentId)) {
+        throw new Error(`Invalid payment ID: ${paymentId}. Must be numeric.`);
+      }
       return this._makeRequest({
         $,
         path: `/v1/payments/${paymentId}`,
@@ -90,6 +93,9 @@ export default {
     async createRefund({
       $, paymentId, amount,
     }) {
+      if (!/^\d+$/.test(paymentId)) {
+        throw new Error(`Invalid payment ID: ${paymentId}. Must be numeric.`);
+      }
       const data = {};
       if (amount) {
         data.amount = parseFloat(amount);

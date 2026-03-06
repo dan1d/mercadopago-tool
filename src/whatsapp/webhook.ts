@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { WhatsAppClient } from "./client.js";
 import { extractMessages, parseMessage } from "./message-parser.js";
 import { createCommandHandlers } from "./handlers.js";
@@ -11,6 +12,7 @@ export interface WhatsAppWebhookConfig {
   currency?: string;
   successUrl?: string;
   allowedPhones?: Set<string>;
+  appSecret?: string;  // Meta app secret for X-Hub-Signature-256 validation
 }
 
 export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
@@ -44,9 +46,38 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
 
     // POST — incoming messages
     if (request.method === "POST") {
+      let rawBody: string;
+      try {
+        rawBody = await request.text();
+      } catch {
+        return new Response("Bad request", { status: 400 });
+      }
+
+      // Validate X-Hub-Signature-256 if appSecret is configured
+      if (config.appSecret) {
+        const signature = request.headers.get("x-hub-signature-256") ?? "";
+        if (!signature) {
+          return new Response("Missing signature", { status: 401 });
+        }
+
+        const expectedSig =
+          "sha256=" +
+          createHmac("sha256", config.appSecret).update(rawBody).digest("hex");
+
+        const sigBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSig);
+
+        if (
+          sigBuffer.length !== expectedBuffer.length ||
+          !timingSafeEqual(sigBuffer, expectedBuffer)
+        ) {
+          return new Response("Invalid signature", { status: 401 });
+        }
+      }
+
       let body: unknown;
       try {
-        body = await request.json();
+        body = JSON.parse(rawBody);
       } catch {
         return new Response("Bad request", { status: 400 });
       }
@@ -63,8 +94,9 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
         if (parsed) {
           try {
             await handleCommand(wa, msg.from, parsed);
-          } catch {
+          } catch (error) {
             // Best-effort: don't fail the webhook on handler errors
+            console.error("[whatsapp] Command handler error:", error);
           }
         }
       }

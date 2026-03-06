@@ -101,6 +101,75 @@ describe('create_payment_preference', () => {
   });
 });
 
+describe('create_payment_preference - unit_price validation', () => {
+  it('should reject NaN unit_price', async () => {
+    const z = createMockZ({ id: '1' });
+    const bundle = {
+      inputData: {
+        title: 'Product',
+        quantity: 1,
+        currency: 'ARS',
+        unit_price: 'not-a-number',
+      },
+    };
+
+    await expect(createPaymentPreference.operation.perform(z, bundle)).rejects.toThrow('unit_price must be a positive number');
+  });
+
+  it('should reject negative unit_price', async () => {
+    const z = createMockZ({ id: '1' });
+    const bundle = {
+      inputData: {
+        title: 'Product',
+        quantity: 1,
+        currency: 'ARS',
+        unit_price: '-10',
+      },
+    };
+
+    await expect(createPaymentPreference.operation.perform(z, bundle)).rejects.toThrow('unit_price must be a positive number');
+  });
+
+  it('should reject zero unit_price', async () => {
+    const z = createMockZ({ id: '1' });
+    const bundle = {
+      inputData: {
+        title: 'Product',
+        quantity: 1,
+        currency: 'ARS',
+        unit_price: '0',
+      },
+    };
+
+    await expect(createPaymentPreference.operation.perform(z, bundle)).rejects.toThrow('unit_price must be a positive number');
+  });
+});
+
+describe('create_refund - path traversal prevention', () => {
+  it('should reject payment_id with path traversal characters', async () => {
+    const z = createMockZ({ id: 1 });
+    const bundle = {
+      inputData: {
+        payment_id: '../../users/me',
+      },
+    };
+
+    await expect(createRefund.operation.perform(z, bundle)).rejects.toThrow('Invalid payment ID: must be numeric.');
+  });
+
+  it('should allow numeric payment_id', async () => {
+    const z = createMockZ({ id: 555, status: 'approved' });
+    const bundle = {
+      inputData: {
+        payment_id: '12345',
+      },
+    };
+
+    const result = await createRefund.operation.perform(z, bundle);
+    expect(result).toBeDefined();
+  });
+});
+
 describe('create_refund', () => {
   it('sends POST to correct refund URL', async () => {
     const mockResponse = {

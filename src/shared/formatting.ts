@@ -37,7 +37,7 @@ export function friendlyError(err: unknown): string {
     if (err.isUnauthorized) return "Error de autenticacion. Verifica el token de Mercado Pago.";
     if (err.isNotFound) return "No se encontro el recurso solicitado. Verifica el ID ingresado.";
     if (err.isRateLimited) return "Demasiadas solicitudes. Intenta de nuevo en unos minutos.";
-    return `Error de Mercado Pago (${err.status}): ${err.body}`;
+    return `Error de Mercado Pago (${err.status}). Intenta de nuevo.`;
   }
   if (err instanceof Error) return `Error: ${err.message}`;
   return "Ocurrio un error inesperado. Intenta de nuevo.";

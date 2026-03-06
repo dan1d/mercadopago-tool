@@ -313,10 +313,14 @@ describe("MCP Server", () => {
   });
 
   describe("server metadata", () => {
-    it("reports correct server info", async () => {
+    it("reports correct server info matching package.json version", async () => {
       const info = client.getServerVersion();
       expect(info?.name).toBe("cobroya");
-      expect(info?.version).toBe("1.0.0");
+      // Version must match package.json
+      const { createRequire } = await import("node:module");
+      const require = createRequire(import.meta.url);
+      const pkg = require("../package.json");
+      expect(info?.version).toBe(pkg.version);
     });
   });
 });

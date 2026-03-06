@@ -19,8 +19,10 @@ import { createWebhookHandler } from "./webhook.js";
 import { WhatsAppClient } from "./whatsapp/client.js";
 import { createPaymentNotifier } from "./whatsapp/handlers.js";
 import { landingHTML } from "./landing.js";
+import { privacyHTML } from "./privacy.js";
+import { termsHTML } from "./terms.js";
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT) || 3000;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? "";
 const MP_WEBHOOK_SECRET = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
 
@@ -56,6 +58,7 @@ const waHandler = WA_ENABLED
       currency: process.env.MP_CURRENCY ?? "ARS",
       successUrl: process.env.MP_SUCCESS_URL,
       allowedPhones: WA_ALLOWED_PHONES,
+      appSecret: process.env.WHATSAPP_APP_SECRET,
     })
   : null;
 
@@ -105,13 +108,37 @@ const mpWebhookHandler = MP_TOKEN
   : null;
 
 // ─── HTTP Server ──────────────────────────────────────────
+const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
+
+class PayloadTooLargeError extends Error {
+  constructor() {
+    super("Payload Too Large");
+    this.name = "PayloadTooLargeError";
+  }
+}
+
+function flattenHeaders(raw: import("node:http").IncomingHttpHeaders): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === undefined) continue;
+    out[key] = Array.isArray(value) ? value.join(", ") : value;
+  }
+  return out;
+}
+
 async function nodeToWebRequest(
   req: import("node:http").IncomingMessage,
   url: URL
 ): Promise<Request> {
   const body = await new Promise<string>((resolve, reject) => {
     let data = "";
+    let size = 0;
     req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > MAX_BODY_SIZE) {
+        reject(new PayloadTooLargeError());
+        return;
+      }
       data += chunk.toString();
     });
     req.on("end", () => resolve(data));
@@ -120,7 +147,7 @@ async function nodeToWebRequest(
 
   return new Request(url.toString(), {
     method: req.method,
-    headers: req.headers as Record<string, string>,
+    headers: flattenHeaders(req.headers),
     body: req.method === "GET" ? undefined : body,
   });
 }
@@ -165,6 +192,20 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Privacy policy
+  if (path === "/privacy") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(privacyHTML);
+    return;
+  }
+
+  // Terms of service
+  if (path === "/terms") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(termsHTML);
+    return;
+  }
+
   // Health check
   if (path === "/health") {
     const status = {
@@ -181,7 +222,16 @@ const server = createServer(async (req, res) => {
 
   // WhatsApp webhook
   if (path.startsWith("/whatsapp") && waHandler) {
-    const webReq = await nodeToWebRequest(req, url);
+    let webReq: Request;
+    try {
+      webReq = await nodeToWebRequest(req, url);
+    } catch (err) {
+      if (err instanceof PayloadTooLargeError) {
+        res.writeHead(413).end("Payload Too Large");
+        return;
+      }
+      throw err;
+    }
     const webRes = await waHandler(webReq);
     await webToNodeResponse(webRes, res);
     return;
@@ -189,7 +239,16 @@ const server = createServer(async (req, res) => {
 
   // Mercado Pago IPN webhook
   if (path.startsWith("/mp-webhook") && mpWebhookHandler) {
-    const webReq = await nodeToWebRequest(req, url);
+    let webReq: Request;
+    try {
+      webReq = await nodeToWebRequest(req, url);
+    } catch (err) {
+      if (err instanceof PayloadTooLargeError) {
+        res.writeHead(413).end("Payload Too Large");
+        return;
+      }
+      throw err;
+    }
     const webRes = await mpWebhookHandler(webReq);
     await webToNodeResponse(webRes, res);
     return;

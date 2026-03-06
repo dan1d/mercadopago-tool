@@ -31,6 +31,7 @@ export class MercadoPagoClient {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: "GET",
       headers: this.headers(),
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) {
       const body = await res.text();
@@ -44,6 +45,7 @@ export class MercadoPagoClient {
       method: "POST",
       headers: this.headers(opts),
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
     });
     if (!res.ok) {
       const text = await res.text();

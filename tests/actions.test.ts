@@ -271,6 +271,16 @@ describe("actions", () => {
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toBe("https://api.mercadopago.com/v1/payments/search?limit=5");
     });
+
+    it("clamps limit to 100 when a larger value is provided", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ results: [] }));
+
+      await searchPayments(client, { limit: 999 });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("limit=100");
+      expect(url).not.toContain("limit=999");
+    });
   });
 
   // ─── getMerchantInfo ────────────────────────────────────────

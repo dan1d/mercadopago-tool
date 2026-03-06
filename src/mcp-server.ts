@@ -6,9 +6,10 @@ import { createMercadoPagoTools } from "./index.js";
 export function createMcpServer(accessToken: string) {
   const { tools } = createMercadoPagoTools(accessToken);
 
+  // Keep version in sync with package.json
   const server = new McpServer({
     name: "cobroya",
-    version: "1.0.0",
+    version: "1.0.1",
   });
 
   server.tool(

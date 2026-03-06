@@ -46,6 +46,9 @@ function validateSignature(
 }
 
 export function createWebhookHandler(config: WebhookConfig) {
+  if (!config.secret) {
+    console.warn("[webhook] No secret configured — webhook signature validation is disabled. Set MERCADO_PAGO_WEBHOOK_SECRET for production use.");
+  }
   const client = new MercadoPagoClient(config.accessToken);
 
   return async (request: Request): Promise<Response> => {
