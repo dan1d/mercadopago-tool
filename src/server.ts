@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 /**
  * Unified production server.
  *

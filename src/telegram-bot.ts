@@ -1,3 +1,4 @@
+import "dotenv/config";
 import TelegramBot from "node-telegram-bot-api";
 import { createMercadoPagoTools } from "./index.js";
 import { statusEmoji, statusLabel, formatMoney, friendlyError } from "./shared/formatting.js";
