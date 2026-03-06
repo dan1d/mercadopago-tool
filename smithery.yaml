@@ -1,0 +1,36 @@
+# Smithery.ai configuration for CobroYa MCP Server
+# Copy this file to the repository root as `smithery.yaml` before submitting to Smithery.
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema for the server's configuration/environment variables
+    type: object
+    required:
+      - mercadoPagoAccessToken
+    properties:
+      mercadoPagoAccessToken:
+        type: string
+        title: Mercado Pago Access Token
+        description: Your Mercado Pago production or sandbox access token. Get one at https://www.mercadopago.com/developers
+      mpCurrency:
+        type: string
+        title: Currency
+        description: Default currency code for payment links (e.g., ARS, BRL, MXN, CLP, COP, PEN, UYU)
+        default: ARS
+      mpSuccessUrl:
+        type: string
+        title: Success URL
+        description: URL to redirect buyers after successful payment
+  commandFunction:
+    # This function generates the startup command from the config
+    |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "cobroya-mcp"],
+      env: {
+        MERCADO_PAGO_ACCESS_TOKEN: config.mercadoPagoAccessToken,
+        ...(config.mpCurrency ? { MP_CURRENCY: config.mpCurrency } : {}),
+        ...(config.mpSuccessUrl ? { MP_SUCCESS_URL: config.mpSuccessUrl } : {})
+      }
+    })
