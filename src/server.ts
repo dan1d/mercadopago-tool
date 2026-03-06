@@ -18,6 +18,7 @@ import { createWhatsAppWebhookHandler } from "./whatsapp/webhook.js";
 import { createWebhookHandler } from "./webhook.js";
 import { WhatsAppClient } from "./whatsapp/client.js";
 import { createPaymentNotifier } from "./whatsapp/handlers.js";
+import { landingHTML } from "./landing.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? "";
@@ -136,8 +137,15 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const path = url.pathname;
 
+  // Landing page
+  if (path === "/") {
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(landingHTML);
+    return;
+  }
+
   // Health check
-  if (path === "/health" || path === "/") {
+  if (path === "/health") {
     const status = {
       ok: true,
       telegram: TELEGRAM_ENABLED,
