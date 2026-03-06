@@ -1,36 +1,178 @@
-# mercadopago-tool
+# CobroYa
 
-Mercado Pago tool connector for AI agents. Exposes Mercado Pago API actions through a simple, typed interface that AI agents can call via MCP-style tool registries.
+**Cobra con Mercado Pago en 10 segundos.**
 
-## Setup
+[![npm version](https://img.shields.io/npm/v/cobroya)](https://www.npmjs.com/package/cobroya)
+[![tests](https://img.shields.io/github/actions/workflow/status/dan1d/mercadopago-tool/ci.yml?label=tests)](https://github.com/dan1d/mercadopago-tool/actions)
+[![coverage](https://img.shields.io/codecov/c/github/dan1d/mercadopago-tool)](https://codecov.io/gh/dan1d/mercadopago-tool)
+[![license](https://img.shields.io/npm/l/cobroya)](./LICENSE)
 
-```bash
-npm install
-npm run build
+CobroYa is an open-source Mercado Pago payment tool for AI agents, Telegram, WhatsApp, and automation platforms. Create payment links, search payments, issue refunds -- all from your AI assistant or chat bot.
+
+[Website](https://cobroya.app) | [npm](https://www.npmjs.com/package/cobroya) | [GitHub](https://github.com/dan1d/mercadopago-tool)
+
+---
+
+## Quick Start with AI
+
+CobroYa is an MCP (Model Context Protocol) server. Add it to your AI tool in one step -- no cloning, no building. Just provide your [Mercado Pago access token](https://www.mercadopago.com/developers/en/docs/checkout-pro/additional-content/your-integrations/credentials).
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "cobroya": {
+      "command": "npx",
+      "args": ["-y", "cobroya"],
+      "env": {
+        "MERCADO_PAGO_ACCESS_TOKEN": "APP_USR-..."
+      }
+    }
+  }
+}
 ```
 
+### Claude Code
+
 ```bash
-cp .env.example .env
-# Edit .env with your real token
+claude mcp add cobroya -- npx -y cobroya \
+  --env MERCADO_PAGO_ACCESS_TOKEN=APP_USR-...
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "cobroya": {
+      "command": "npx",
+      "args": ["-y", "cobroya"],
+      "env": {
+        "MERCADO_PAGO_ACCESS_TOKEN": "APP_USR-..."
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to your Windsurf MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "cobroya": {
+      "command": "npx",
+      "args": ["-y", "cobroya"],
+      "env": {
+        "MERCADO_PAGO_ACCESS_TOKEN": "APP_USR-..."
+      }
+    }
+  }
+}
+```
+
+> Once configured, ask your AI assistant things like: *"Create a payment link for $5000 for a Python course"* or *"Show me today's approved payments"*.
+
+---
+
+## Available Tools
+
+CobroYa exposes 5 MCP tools that any connected AI agent can call:
+
+| Tool | Description |
+|------|-------------|
+| `create_payment_preference` | Create a Mercado Pago checkout payment link. Returns an `init_point` URL to share with buyers. Supports `back_urls` and `notification_url`. |
+| `get_payment` | Retrieve full details of a payment by ID, including status, amount, and payer info. |
+| `search_payments` | Search payments with filters: `status` (approved, pending, rejected, etc.), sort order, and pagination. |
+| `create_refund` | Issue a full or partial refund for a payment. Omit `amount` for a full refund. |
+| `get_merchant_info` | Get the authenticated merchant's profile: user ID, nickname, and site. |
+
+---
+
+## Telegram Bot
+
+CobroYa includes a ready-to-use Telegram bot: [@CobroYa_bot](https://t.me/CobroYa_bot)
+
+### Self-hosting the bot
+
+1. Create a bot via [@BotFather](https://t.me/BotFather) and get your token.
+2. Set environment variables:
+
+```bash
 export MERCADO_PAGO_ACCESS_TOKEN="APP_USR-..."
+export TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
 ```
 
-Get your token from [Mercado Pago Developers](https://www.mercadopago.com/developers/en/docs/checkout-pro/additional-content/your-integrations/credentials).
+3. Run:
 
-## Actions
+```bash
+npx cobroya-telegram
+```
 
-| Action | Description |
-|--------|-------------|
-| `create_payment_preference` | Create a checkout payment link with optional back_urls and notification_url |
-| `get_payment` | Retrieve a payment by ID |
-| `create_refund` | Full or partial refund of a payment |
-| `search_payments` | Search payments with filters (status, sort, pagination) |
-| `get_merchant_info` | Get merchant user profile |
+Or from source:
 
-## Agent Usage
+```bash
+npm run bot
+```
+
+---
+
+## WhatsApp
+
+CobroYa supports WhatsApp Business Cloud API for receiving commands and sending payment notifications.
+
+1. Create a Meta app at [Meta for Developers](https://developers.facebook.com/) and enable WhatsApp Business API.
+2. Set environment variables:
+
+```bash
+export WHATSAPP_ACCESS_TOKEN="your-meta-graph-api-token"
+export WHATSAPP_PHONE_NUMBER_ID="your-phone-number-id"
+export WHATSAPP_VERIFY_TOKEN="your-webhook-verify-token"
+```
+
+3. Run the webhook server:
+
+```bash
+npm run whatsapp
+# Starts on http://localhost:3000/webhook
+```
+
+4. Expose with ngrok (`ngrok http 3000`) and configure the webhook URL in your Meta Dashboard.
+
+For full details on supported commands and payment notifications, see the [WhatsApp documentation](https://cobroya.app).
+
+---
+
+## Automation Platforms
+
+Pre-built packages for popular automation platforms are available in the `packages/` directory:
+
+- **n8n** -- `packages/n8n-nodes-mercadopago`
+- **Zapier** -- `packages/zapier-mercadopago`
+- **Make** -- `packages/make-mercadopago`
+- **Pipedream** -- `packages/pipedream-mercadopago`
+
+Each package wraps the CobroYa core with platform-specific configuration. See the README in each package for setup instructions.
+
+---
+
+## Programmatic Usage
+
+Install as a dependency:
+
+```bash
+npm install cobroya
+```
 
 ```typescript
-import { createMercadoPagoTools } from "mercadopago-tool";
+import { createMercadoPagoTools } from "cobroya";
 
 const mp = createMercadoPagoTools(process.env.MERCADO_PAGO_ACCESS_TOKEN!);
 
@@ -40,34 +182,29 @@ const pref = await mp.tools.create_payment_preference({
   quantity: 1,
   currency: "ARS",
   unit_price: 5000,
-  back_urls: {
-    success: "https://myapp.com/success",
-    failure: "https://myapp.com/failure",
-  },
-  notification_url: "https://myapp.com/webhooks/mp",
 });
-// pref.init_point -> checkout URL to share with the buyer
+console.log(pref.init_point); // Checkout URL to share with the buyer
 
 // Search approved payments
 const payments = await mp.tools.search_payments({ status: "approved", limit: 10 });
 
-// Refund a payment
-const refund = await mp.tools.create_refund({ payment_id: "123456789" });
-
-// Partial refund
-const partial = await mp.tools.create_refund({ payment_id: "123456789", amount: 500 });
-
 // Get payment details
 const payment = await mp.tools.get_payment({ payment_id: "123456789" });
 
-// List schemas for AI agent tool registration
-console.log(mp.schemas);
+// Full refund
+await mp.tools.create_refund({ payment_id: "123456789" });
+
+// Partial refund
+await mp.tools.create_refund({ payment_id: "123456789", amount: 500 });
+
+// Merchant profile
+const merchant = await mp.tools.get_merchant_info();
 ```
 
-## Error Handling
+### Error Handling
 
 ```typescript
-import { MercadoPagoError } from "mercadopago-tool";
+import { MercadoPagoError } from "cobroya";
 
 try {
   await mp.tools.get_payment({ payment_id: "invalid" });
@@ -81,151 +218,60 @@ try {
 }
 ```
 
-## Integration Test
+---
 
-Test against the real API:
+## Environment Variables
 
-```bash
-MERCADO_PAGO_ACCESS_TOKEN=APP_USR-... npm run integration
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MERCADO_PAGO_ACCESS_TOKEN` | Yes | Mercado Pago API access token ([get one here](https://www.mercadopago.com/developers/en/docs/checkout-pro/additional-content/your-integrations/credentials)) |
+| `TELEGRAM_BOT_TOKEN` | For Telegram | Telegram bot token from @BotFather |
+| `WHATSAPP_ACCESS_TOKEN` | For WhatsApp | Meta Graph API token |
+| `WHATSAPP_PHONE_NUMBER_ID` | For WhatsApp | WhatsApp Business phone number ID |
+| `WHATSAPP_VERIFY_TOKEN` | For WhatsApp | Webhook verification token |
+| `WA_NOTIFY_PHONE` | No | Phone number for WhatsApp payment notifications |
+| `MERCADO_PAGO_WEBHOOK_SECRET` | No | HMAC secret for Mercado Pago webhook signature validation |
+| `MP_CURRENCY` | No | Default currency (defaults to `ARS`) |
+| `MP_SUCCESS_URL` | No | Default success redirect URL for payment preferences |
 
-## Curl Examples
+---
 
-**Create preference:**
-
-```bash
-curl -X POST https://api.mercadopago.com/checkout/preferences \
-  -H "Authorization: Bearer $MERCADO_PAGO_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"items":[{"title":"Test","quantity":1,"currency_id":"ARS","unit_price":1000}],"back_urls":{"success":"https://myapp.com/ok"},"notification_url":"https://myapp.com/webhooks/mp"}'
-```
-
-**Get payment:**
-
-```bash
-curl https://api.mercadopago.com/v1/payments/123456789 \
-  -H "Authorization: Bearer $MERCADO_PAGO_ACCESS_TOKEN"
-```
-
-**Refund payment:**
+## Development
 
 ```bash
-curl -X POST https://api.mercadopago.com/v1/payments/123456789/refunds \
-  -H "Authorization: Bearer $MERCADO_PAGO_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
+# Install dependencies
+npm install
 
-**Search payments:**
+# Build
+npm run build
 
-```bash
-curl "https://api.mercadopago.com/v1/payments/search?status=approved&limit=10" \
-  -H "Authorization: Bearer $MERCADO_PAGO_ACCESS_TOKEN"
-```
-
-**Merchant info:**
-
-```bash
-curl https://api.mercadopago.com/users/me \
-  -H "Authorization: Bearer $MERCADO_PAGO_ACCESS_TOKEN"
-```
-
-## WhatsApp Business Integration
-
-### Setup
-
-1. Create a Meta app at [Meta for Developers](https://developers.facebook.com/)
-2. Enable WhatsApp Business API
-3. Get your access token, phone number ID, and set a verify token
-
-```bash
-# Add to .env
-WHATSAPP_ACCESS_TOKEN=your-meta-graph-api-token
-WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
-WHATSAPP_VERIFY_TOKEN=your-webhook-verify-token
-```
-
-### Run the WhatsApp server
-
-```bash
-npm run whatsapp
-# Server starts on http://localhost:3000/webhook
-# Use ngrok to expose: ngrok http 3000
-```
-
-Then configure the webhook URL in Meta Dashboard: `https://your-ngrok-url/webhook`
-
-### Supported commands
-
-Users send plain text messages to your WhatsApp number:
-
-```
-cobrar 5000 curso python
-→ 💳 Link de pago generado
-  https://www.mercadopago.com/checkout/v1/redirect?pref_id=...
-
-pagos
-→ ✅ Aprobado
-  $5000
-  ID: 123456
-
-estado 123456
-→ Pago #123456
-  Estado: ✅ Aprobado
-  Monto: $5000
-
-devolver 123456
-→ Devolucion total realizada
-  Monto devuelto: $5000
-
-devolver 123456 2000
-→ Devolucion parcial realizada
-  Monto devuelto: $2000
-
-ayuda
-→ Lista de comandos
-```
-
-### Payment notifications
-
-When a payment is confirmed via the Mercado Pago webhook, you can forward it to WhatsApp:
-
-```typescript
-import { createWhatsAppWebhookHandler, WhatsAppClient, createPaymentNotifier, createWebhookHandler } from "mercadopago-tool";
-
-const wa = new WhatsAppClient({
-  accessToken: process.env.WHATSAPP_ACCESS_TOKEN!,
-  phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
-});
-
-// Notify merchant on WhatsApp when payment is approved
-const notifier = createPaymentNotifier(wa, "5491155551234");
-
-const mpWebhook = createWebhookHandler({
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN!,
-  onPayment: notifier,
-});
-```
-
-### Programmatic usage
-
-```typescript
-import { WhatsAppClient } from "mercadopago-tool";
-
-const wa = new WhatsAppClient({
-  accessToken: process.env.WHATSAPP_ACCESS_TOKEN!,
-  phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
-});
-
-await wa.sendMessage("5491155551234", "Tu pago fue recibido!");
-```
-
-## Testing
-
-```bash
+# Run all tests
 npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+
+# Type-check without emitting
+npx tsc --noEmit
+
+# Integration test against real Mercado Pago API
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-... npm run integration
+
+# Start the unified server (Telegram + WhatsApp + webhooks)
+npm start
+
+# Dev mode with auto-reload
+npm run dev:server
+
+# Docker
+docker compose up -d
 ```
+
+---
 
 ## License
 
-MIT
+[MIT](./LICENSE) -- by [dan1d](https://github.com/dan1d)

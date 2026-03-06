@@ -1,0 +1,14 @@
+{
+  "name": "openai-mercadopago",
+  "version": "0.1.0",
+  "description": "OpenAI function calling adapter for Mercado Pago payments",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "dan1d",
+  "license": "MIT",
+  "homepage": "https://cobroya.app",
+  "repository": { "type": "git", "url": "https://github.com/dan1d/mercadopago-tool" },
+  "scripts": { "build": "tsc", "test": "vitest run" },
+  "devDependencies": { "typescript": "^5.4.0", "vitest": "^1.6.0" },
+  "engines": { "node": ">=18" }
+}
