@@ -185,6 +185,81 @@ describe("WhatsApp Webhook", () => {
     });
   });
 
+  // ─── allowedPhones filter ────────────────────────────────
+
+  describe("allowedPhones filter", () => {
+    it("skips messages from non-allowed phones", async () => {
+      const restrictedHandler = createWhatsAppWebhookHandler({
+        ...baseConfig,
+        allowedPhones: new Set(["549222"]),
+      });
+
+      const body = {
+        object: "whatsapp_business_account",
+        entry: [
+          {
+            changes: [
+              {
+                value: {
+                  messages: [
+                    { from: "549111", id: "wamid.4", timestamp: "1", type: "text", text: { body: "ayuda" } },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const res = await restrictedHandler(req);
+      expect(res.status).toBe(200);
+      // No fetch calls since the phone is not allowed
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── Handler error catch ───────────────────────────────────
+
+  describe("handler error catch", () => {
+    it("returns 200 even when command handler throws", async () => {
+      // Make the MP API call throw so the handler fails
+      mockFetch.mockRejectedValueOnce(new Error("MP API down"));
+
+      const body = {
+        object: "whatsapp_business_account",
+        entry: [
+          {
+            changes: [
+              {
+                value: {
+                  messages: [
+                    { from: "549111", id: "wamid.5", timestamp: "1", type: "text", text: { body: "pagos" } },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const res = await handler(req);
+      // Webhook still returns 200 even though the handler errored
+      expect(res.status).toBe(200);
+    });
+  });
+
   // ─── Other methods ──────────────────────────────────────
 
   it("returns 405 for unsupported methods", async () => {

@@ -106,6 +106,13 @@ describe("command handlers", () => {
       await handleCommand(wa, "549111", { command: "pagos", args: [] });
       expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("No se encontraron"));
     });
+
+    it("sends error on MP failure", async () => {
+      mockFetch.mockResolvedValueOnce(new Response("Server Error", { status: 500 }));
+      const { wa, spy } = createMockWa();
+      await handleCommand(wa, "549111", { command: "pagos", args: [] });
+      expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Error de Mercado Pago"));
+    });
   });
 
   describe("estado", () => {
@@ -134,6 +141,13 @@ describe("command handlers", () => {
       expect(msg).toContain("Aprobado");
       expect(msg).toContain("2500");
       expect(msg).toContain("test@example.com");
+    });
+
+    it("sends error when MP API returns 404", async () => {
+      mockFetch.mockResolvedValueOnce(new Response("Not found", { status: 404 }));
+      const { wa, spy } = createMockWa();
+      await handleCommand(wa, "549111", { command: "estado", args: ["99999"] });
+      expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("No se encontro"));
     });
   });
 
@@ -168,6 +182,13 @@ describe("command handlers", () => {
       const { wa, spy } = createMockWa();
       await handleCommand(wa, "549111", { command: "devolver", args: ["789", "abc"] });
       expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("numero positivo"));
+    });
+
+    it("sends error when MP API returns 500", async () => {
+      mockFetch.mockResolvedValueOnce(new Response("Internal Server Error", { status: 500 }));
+      const { wa, spy } = createMockWa();
+      await handleCommand(wa, "549111", { command: "devolver", args: ["789"] });
+      expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Error de Mercado Pago"));
     });
   });
 });

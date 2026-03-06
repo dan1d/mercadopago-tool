@@ -110,6 +110,7 @@ export function createMcpServer(accessToken: string) {
 }
 
 // CLI entry point
+/* v8 ignore next 15 */
 const isMain = process.argv[1]?.includes("mcp-server");
 if (isMain) {
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;

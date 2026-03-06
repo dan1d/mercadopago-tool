@@ -210,6 +210,20 @@ describe("createWebhookHandler", () => {
       expect(res.status).toBe(400);
     });
 
+    it("returns 400 when json() resolves to a non-object (null)", async () => {
+      const handler = createWebhookHandler({ accessToken, onPayment });
+      const req = new Request("https://example.com/webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "null",
+      });
+      const res = await handler(req);
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).toContain("expected JSON object");
+      expect(onPayment).not.toHaveBeenCalled();
+    });
+
     it("returns 400 for path traversal attempt in data.id", async () => {
       const handler = createWebhookHandler({ accessToken, onPayment });
       const req = makeRequest({ type: "payment", data: { id: "../../users/me" } });

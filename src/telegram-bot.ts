@@ -247,6 +247,7 @@ export function startBot(): TelegramBot {
 }
 
 // Auto-start when run directly
+/* v8 ignore start */
 const isMain =
   typeof require !== "undefined"
     ? require.main === module
@@ -255,3 +256,4 @@ const isMain =
 if (isMain) {
   startBot();
 }
+/* v8 ignore stop */

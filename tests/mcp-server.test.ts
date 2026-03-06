@@ -207,6 +207,19 @@ describe("MCP Server", () => {
       const body = JSON.parse(fetchCall[1].body);
       expect(body.amount).toBe(2000);
     });
+
+    it("returns error on API failure", async () => {
+      mockFetch.mockResolvedValueOnce(new Response("Not Found", { status: 404 }));
+
+      const result = await client.callTool({
+        name: "create_refund",
+        arguments: { payment_id: "999999" },
+      });
+
+      expect(result.isError).toBe(true);
+      const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+      expect(text).toContain("404");
+    });
   });
 
   describe("search_payments", () => {
@@ -245,6 +258,19 @@ describe("MCP Server", () => {
       const fetchUrl = mockFetch.mock.calls[0][0];
       expect(fetchUrl).toContain("status=approved");
       expect(fetchUrl).toContain("limit=5");
+    });
+
+    it("returns error on API failure", async () => {
+      mockFetch.mockResolvedValueOnce(new Response("Server Error", { status: 500 }));
+
+      const result = await client.callTool({
+        name: "search_payments",
+        arguments: {},
+      });
+
+      expect(result.isError).toBe(true);
+      const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+      expect(text).toContain("500");
     });
   });
 

@@ -18,6 +18,7 @@ vi.mock("node-telegram-bot-api", () => {
 vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
 vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
 vi.stubEnv("MP_CURRENCY", "ARS");
+vi.stubEnv("MP_SUCCESS_URL", "https://example.com/success");
 
 // Mock global fetch for MercadoPagoClient
 const mockFetch = vi.fn();
@@ -210,6 +211,22 @@ describe("Telegram Bot", () => {
         expect.stringContaining("No se encontraron")
       );
     });
+
+    it("should handle API error gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve("Internal Server Error"),
+      });
+
+      const handler = getHandler("pagos");
+      await handler(makeMsg(), null);
+
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        123,
+        expect.stringContaining("Error de Mercado Pago")
+      );
+    });
   });
 
   describe("/estado", () => {
@@ -339,5 +356,162 @@ describe("Telegram Bot", () => {
         expect.stringContaining("Demasiadas solicitudes")
       );
     });
+  });
+
+  describe("/start and /help for authorized users", () => {
+    beforeEach(async () => {
+      vi.clearAllMocks();
+      const { startBot } = await import("../src/telegram-bot.js");
+      startBot();
+    });
+
+    it("/start sends welcome message", async () => {
+      const handler = getHandler("start");
+      await handler(makeMsg(), null);
+
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        123,
+        expect.stringContaining("Soy tu bot de cobros")
+      );
+    });
+
+    it("/help sends available commands", async () => {
+      const handler = getHandler("help");
+      await handler(makeMsg(), null);
+
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        123,
+        expect.stringContaining("Comandos disponibles")
+      );
+    });
+  });
+});
+
+describe("Telegram Bot - authorization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("unauthorized user gets 'No autorizado' on /start", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const startCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("start")
+    );
+    const handler = startCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, null);
+
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      123,
+      expect.stringContaining("No autorizado")
+    );
+  });
+
+  it("unauthorized user is silently ignored on /help", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const helpCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("help")
+    );
+    const handler = helpCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, null);
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it("unauthorized user is silently ignored on /cobrar", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const cobrarCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("cobrar")
+    );
+    const handler = cobrarCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, makeMatch("5000 test"));
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it("unauthorized user is silently ignored on /pagos", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const pagosCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("pagos")
+    );
+    const handler = pagosCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, null);
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it("unauthorized user is silently ignored on /estado", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const estadoCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("estado")
+    );
+    const handler = estadoCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, makeMatch("12345"));
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+  });
+
+  it("unauthorized user is silently ignored on /devolver", async () => {
+    vi.resetModules();
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-telegram-token");
+    vi.stubEnv("MERCADO_PAGO_ACCESS_TOKEN", "test-mp-token");
+    vi.stubEnv("MP_CURRENCY", "ARS");
+    vi.stubEnv("TELEGRAM_ALLOWED_CHAT_IDS", "999");
+
+    const { startBot } = await import("../src/telegram-bot.js");
+    startBot();
+
+    const devolverCall = mockOnText.mock.calls.find(
+      (c: unknown[]) => (c[0] as RegExp).source.includes("devolver")
+    );
+    const handler = devolverCall![1] as (msg: Record<string, unknown>, match: RegExpExecArray | null) => void;
+
+    await handler({ chat: { id: 123 } }, makeMatch("12345"));
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 });
