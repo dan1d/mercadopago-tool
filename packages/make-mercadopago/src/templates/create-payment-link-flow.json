@@ -1,0 +1,20 @@
+{
+  "name": "Create Mercado Pago Payment Link",
+  "description": "Creates a payment preference and returns the checkout URL",
+  "modules": [
+    {
+      "name": "Create Payment Preference",
+      "action": "create_payment_preference",
+      "inputs": {
+        "title": "{{form.product_name}}",
+        "quantity": 1,
+        "currency": "ARS",
+        "unit_price": "{{form.price}}"
+      }
+    }
+  ],
+  "output": {
+    "checkout_url": "{{modules.1.init_point}}",
+    "preference_id": "{{modules.1.preference_id}}"
+  }
+}

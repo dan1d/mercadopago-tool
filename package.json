@@ -1,0 +1,37 @@
+{
+  "name": "mercadopago-tool",
+  "version": "1.0.0",
+  "description": "Mercado Pago tool connector for AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mercadopago-mcp": "./bin/mcp-server.mjs",
+    "mercadopago-telegram": "./bin/telegram-bot.mjs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "integration": "tsx scripts/integration.ts",
+    "bot": "tsx src/telegram-bot.ts",
+    "whatsapp": "tsx scripts/whatsapp-server.ts",
+    "start": "node dist/server.js",
+    "dev:server": "tsx src/server.ts",
+    "docker:build": "docker build -t mercadopago-tool .",
+    "docker:run": "docker run --env-file .env -p 3000:3000 mercadopago-tool"
+  },
+  "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.64.14",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "node-telegram-bot-api": "^0.67.0",
+    "zod": "^4.3.6"
+  }
+}

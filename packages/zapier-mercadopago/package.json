@@ -1,0 +1,18 @@
+{
+  "name": "zapier-mercadopago",
+  "version": "1.0.0",
+  "description": "Zapier integration for Mercado Pago payments",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest --testPathPattern=test"
+  },
+  "dependencies": {
+    "zapier-platform-core": "15.*"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "zapier": {
+    "platformVersion": "15.0.0"
+  }
+}

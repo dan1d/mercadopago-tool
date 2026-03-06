@@ -1,0 +1,29 @@
+{
+  "name": "n8n-nodes-mercadopago",
+  "version": "0.1.0",
+  "description": "n8n community node for Mercado Pago payments",
+  "license": "MIT",
+  "homepage": "",
+  "author": { "name": "mercadopago-tool" },
+  "repository": { "type": "git", "url": "" },
+  "main": "index.js",
+  "keywords": ["n8n-community-node-package", "n8n", "mercadopago", "payments"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/MercadoPagoApi.credentials.js"],
+    "nodes": ["dist/nodes/MercadoPago/MercadoPago.node.js"]
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "files": ["dist"],
+  "devDependencies": {
+    "n8n-workflow": "^1.0.0",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

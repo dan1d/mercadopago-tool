@@ -1,0 +1,22 @@
+{
+  "node": "n8n-nodes-mercadopago.mercadoPago",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Finance & Payments"],
+  "resources": {
+    "primaryDocumentation": [
+      {
+        "url": "https://www.mercadopago.com.br/developers/en/docs"
+      }
+    ],
+    "credentialDocumentation": [
+      {
+        "url": "https://www.mercadopago.com.br/developers/en/docs/credentials"
+      }
+    ]
+  },
+  "subcategories": {
+    "Finance & Payments": ["Payment Processing"]
+  },
+  "alias": ["mercadopago", "payment", "checkout", "refund", "mp"]
+}

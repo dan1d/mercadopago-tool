@@ -1,0 +1,15 @@
+{
+  "name": "Mercado Pago - Payment Updated Webhook",
+  "description": "Triggers when a payment is created or updated in Mercado Pago",
+  "trigger": {
+    "type": "webhook",
+    "url": "{{webhook_url}}/webhook",
+    "method": "POST"
+  },
+  "output_mapping": {
+    "payment_id": "{{data.payment_id}}",
+    "status": "{{data.status}}",
+    "amount": "{{data.transaction_amount}}",
+    "currency": "{{data.currency_id}}"
+  }
+}

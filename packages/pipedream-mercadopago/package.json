@@ -1,0 +1,17 @@
+{
+  "name": "@pipedream/mercadopago",
+  "version": "0.0.1",
+  "description": "Pipedream components for Mercado Pago",
+  "type": "module",
+  "main": "common/mercadopago.app.mjs",
+  "keywords": [
+    "pipedream",
+    "mercadopago",
+    "payments"
+  ],
+  "author": "Pipedream <support@pipedream.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@pipedream/platform": "^3.0.0"
+  }
+}
