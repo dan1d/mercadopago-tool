@@ -44,6 +44,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "integration": "tsx scripts/integration.ts",
     "bot": "tsx src/telegram-bot.ts",
