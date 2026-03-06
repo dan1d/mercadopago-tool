@@ -10,6 +10,7 @@ export interface WhatsAppWebhookConfig {
   mpAccessToken: string;
   currency?: string;
   successUrl?: string;
+  allowedPhones?: Set<string>;
 }
 
 export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
@@ -53,6 +54,11 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
       const messages = extractMessages(body as Record<string, unknown>);
 
       for (const msg of messages) {
+        // Access control: if allowedPhones is set, only respond to those numbers
+        if (config.allowedPhones && !config.allowedPhones.has(msg.from)) {
+          continue;
+        }
+
         const parsed = parseMessage(msg.text);
         if (parsed) {
           try {

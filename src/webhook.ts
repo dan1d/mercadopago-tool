@@ -92,8 +92,8 @@ export function createWebhookHandler(config: WebhookConfig) {
       await config.onPayment(payment);
       return new Response("OK", { status: 200 });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Internal server error";
-      return new Response(message, { status: 500 });
+      console.error("[webhook] Error processing payment:", error);
+      return new Response("Internal server error", { status: 500 });
     }
   };
 }

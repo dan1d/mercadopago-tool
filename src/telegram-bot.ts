@@ -7,6 +7,11 @@ const MP_ACCESS_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? "";
 const MP_CURRENCY = process.env.MP_CURRENCY ?? "ARS";
 const MP_SUCCESS_URL = process.env.MP_SUCCESS_URL ?? "";
 
+// Access control: comma-separated list of allowed Telegram chat IDs
+const ALLOWED_CHAT_IDS = process.env.TELEGRAM_ALLOWED_CHAT_IDS
+  ? new Set(process.env.TELEGRAM_ALLOWED_CHAT_IDS.split(",").map((id) => Number(id.trim())))
+  : null;
+
 export function startBot(): TelegramBot {
   if (!TELEGRAM_BOT_TOKEN) {
     throw new Error("TELEGRAM_BOT_TOKEN es requerido. Configuralo en las variables de entorno.");
@@ -18,8 +23,17 @@ export function startBot(): TelegramBot {
   const mp = createMercadoPagoTools(MP_ACCESS_TOKEN);
   const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 
+  function isAuthorized(chatId: number): boolean {
+    if (!ALLOWED_CHAT_IDS) return true; // No whitelist = allow all (dev mode)
+    return ALLOWED_CHAT_IDS.has(chatId);
+  }
+
   bot.onText(/\/start(?:\s|$)/, (msg) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) {
+      bot.sendMessage(chatId, `No autorizado. Tu chat ID es: ${chatId}`);
+      return;
+    }
     bot.sendMessage(
       chatId,
       "Hola! Soy tu bot de cobros con Mercado Pago.\n\n" +
@@ -30,6 +44,7 @@ export function startBot(): TelegramBot {
 
   bot.onText(/\/help(?:\s|$)/, (msg) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
     bot.sendMessage(
       chatId,
       "Comandos disponibles:\n\n" +
@@ -44,6 +59,7 @@ export function startBot(): TelegramBot {
 
   bot.onText(/\/cobrar(?:\s+(.*))?$/, async (msg, match) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
     const args = match?.[1]?.trim();
 
     if (!args) {
@@ -104,6 +120,7 @@ export function startBot(): TelegramBot {
 
   bot.onText(/\/pagos(?:\s|$)/, async (msg) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
 
     try {
       const result = (await mp.tools.search_payments({ limit: 5 })) as {
@@ -141,6 +158,7 @@ export function startBot(): TelegramBot {
 
   bot.onText(/\/estado(?:\s+(\S+))?$/, async (msg, match) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
     const paymentId = match?.[1]?.trim();
 
     if (!paymentId) {
@@ -180,6 +198,7 @@ export function startBot(): TelegramBot {
 
   bot.onText(/\/devolver(?:\s+(\S+)(?:\s+(\S+))?)?$/, async (msg, match) => {
     const chatId = msg.chat.id;
+    if (!isAuthorized(chatId)) return;
     const paymentId = match?.[1]?.trim();
 
     if (!paymentId) {

@@ -23,9 +23,12 @@ const MP_WEBHOOK_SECRET = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
 
 // ─── Telegram Bot ─────────────────────────────────────────
 const TELEGRAM_ENABLED = !!process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_NOTIFY_CHAT_ID = process.env.TELEGRAM_NOTIFY_CHAT_ID;
+let telegramBot: ReturnType<typeof startBot> | null = null;
+
 if (TELEGRAM_ENABLED) {
   try {
-    startBot();
+    telegramBot = startBot();
   } catch (err) {
     console.error("Telegram bot failed to start:", err);
   }
@@ -37,6 +40,10 @@ const WA_ENABLED =
   !!process.env.WHATSAPP_PHONE_NUMBER_ID &&
   !!process.env.WHATSAPP_VERIFY_TOKEN;
 
+const WA_ALLOWED_PHONES = process.env.WHATSAPP_ALLOWED_PHONES
+  ? new Set(process.env.WHATSAPP_ALLOWED_PHONES.split(",").map((p) => p.trim()))
+  : undefined;
+
 const waHandler = WA_ENABLED
   ? createWhatsAppWebhookHandler({
       waAccessToken: process.env.WHATSAPP_ACCESS_TOKEN!,
@@ -45,6 +52,7 @@ const waHandler = WA_ENABLED
       mpAccessToken: MP_TOKEN,
       currency: process.env.MP_CURRENCY ?? "ARS",
       successUrl: process.env.MP_SUCCESS_URL,
+      allowedPhones: WA_ALLOWED_PHONES,
     })
   : null;
 
@@ -61,6 +69,20 @@ if (WA_ENABLED && WA_NOTIFY_PHONE) {
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
   });
   paymentCallbacks.push(createPaymentNotifier(waClient, WA_NOTIFY_PHONE));
+}
+
+// Telegram notification
+if (telegramBot && TELEGRAM_NOTIFY_CHAT_ID) {
+  const chatId = Number(TELEGRAM_NOTIFY_CHAT_ID);
+  paymentCallbacks.push(async (payment: unknown) => {
+    const p = payment as { id: number; status: string; transaction_amount: number; description?: string };
+    if (p.status !== "approved") return;
+    await telegramBot!.sendMessage(
+      chatId,
+      `Pago recibido\nMonto: $${p.transaction_amount}\nID: ${p.id}` +
+        (p.description ? `\nDescripcion: ${p.description}` : "")
+    );
+  });
 }
 
 // Console log (always)
@@ -84,12 +106,13 @@ async function nodeToWebRequest(
   req: import("node:http").IncomingMessage,
   url: URL
 ): Promise<Request> {
-  const body = await new Promise<string>((resolve) => {
+  const body = await new Promise<string>((resolve, reject) => {
     let data = "";
     req.on("data", (chunk: Buffer) => {
       data += chunk.toString();
     });
     req.on("end", () => resolve(data));
+    req.on("error", reject);
   });
 
   return new Request(url.toString(), {
