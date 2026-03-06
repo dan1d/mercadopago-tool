@@ -1,6 +1,8 @@
 """Tests for langchain-mercadopago tools. Written FIRST following TDD."""
+from __future__ import annotations
 
 import json
+from typing import Optional
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
@@ -23,7 +25,7 @@ BASE_URL = "https://api.mercadopago.com"
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _mock_response(status_code: int = 200, json_data: dict | None = None) -> httpx.Response:
+def _mock_response(status_code: int = 200, json_data: Optional[dict] = None) -> httpx.Response:
     """Build a fake httpx.Response."""
     resp = httpx.Response(
         status_code=status_code,
