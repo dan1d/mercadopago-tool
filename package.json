@@ -1,6 +1,7 @@
 {
   "name": "cobroya",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "mcpName": "io.github.dan1d/cobroya",
   "description": "Mercado Pago payment links from Telegram, WhatsApp, and AI agents. Cobra en 10 segundos.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
