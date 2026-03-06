@@ -274,4 +274,4 @@ docker compose up -d
 
 ## License
 
-[MIT](./LICENSE) -- by [dan1d](https://github.com/dan1d)
+[MIT](./LICENSE) -- by [dan1d](https://dan1d.dev/)
