@@ -21,6 +21,8 @@ import { createPaymentNotifier } from "./whatsapp/handlers.js";
 import { landingHTML } from "./landing.js";
 import { privacyHTML } from "./privacy.js";
 import { termsHTML } from "./terms.js";
+import { handleMcpSse, handleMcpMessage, handleMcpOptions, getActiveSessionCount } from "./mcp-sse.js";
+import { createMcpServer } from "./mcp-server.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? "";
@@ -106,6 +108,10 @@ const mpWebhookHandler = MP_TOKEN
       },
     })
   : null;
+
+// ─── MCP SSE (Hosted Endpoint) ───────────────────────────
+const MCP_SSE_ENABLED = !!MP_TOKEN;
+const mcpServerInstance = MCP_SSE_ENABLED ? createMcpServer(MP_TOKEN) : null;
 
 // ─── HTTP Server ──────────────────────────────────────────
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
@@ -213,10 +219,26 @@ const server = createServer(async (req, res) => {
       telegram: TELEGRAM_ENABLED,
       whatsapp: WA_ENABLED,
       mp_webhook: !!mpWebhookHandler,
+      mcp_sse: MCP_SSE_ENABLED,
+      mcp_sessions: getActiveSessionCount(),
       uptime: process.uptime(),
     };
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(status));
+    return;
+  }
+
+  // MCP SSE — hosted MCP endpoint
+  if (path === "/mcp/sse" && req.method === "GET" && mcpServerInstance) {
+    await handleMcpSse(req, res, mcpServerInstance);
+    return;
+  }
+  if (path === "/mcp/message" && req.method === "POST" && MCP_SSE_ENABLED) {
+    await handleMcpMessage(req, res);
+    return;
+  }
+  if (path.startsWith("/mcp/") && req.method === "OPTIONS") {
+    handleMcpOptions(req, res);
     return;
   }
 
@@ -263,6 +285,7 @@ server.listen(PORT, () => {
   console.log(`Telegram: ${TELEGRAM_ENABLED ? "ON" : "OFF"}`);
   console.log(`WhatsApp: ${WA_ENABLED ? "ON" : "OFF"}`);
   console.log(`MP Webhook: ${mpWebhookHandler ? "ON" : "OFF"}`);
+  console.log(`MCP SSE: ${MCP_SSE_ENABLED ? "ON" : "OFF"}`);
   if (WA_NOTIFY_PHONE) console.log(`WA Notifications: ${WA_NOTIFY_PHONE}`);
   console.log(`Health: http://localhost:${PORT}/health`);
   console.log(`================================\n`);
