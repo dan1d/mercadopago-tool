@@ -23,10 +23,37 @@ import { privacyHTML } from "./privacy.js";
 import { termsHTML } from "./terms.js";
 import { handleMcpSse, handleMcpMessage, handleMcpOptions, getActiveSessionCount } from "./mcp-sse.js";
 import { createMcpServer } from "./mcp-server.js";
+import { createMerchantStore } from "./db/merchant-store.js";
+import { createTokenResolver } from "./db/token-resolver.js";
+import type { MerchantStore } from "./db/merchant-store.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? "";
 const MP_WEBHOOK_SECRET = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+
+// ─── Multi-Merchant Store ────────────────────────────────
+const TOKEN_ENCRYPTION_KEY = process.env.TOKEN_ENCRYPTION_KEY;
+const DB_PATH = process.env.DB_PATH ?? "/data/cobroya.db";
+
+let merchantStore: MerchantStore | null = null;
+if (TOKEN_ENCRYPTION_KEY) {
+  try {
+    const keyBuffer = Buffer.from(TOKEN_ENCRYPTION_KEY, "hex");
+    if (keyBuffer.length !== 32) {
+      console.error("TOKEN_ENCRYPTION_KEY must be 64 hex characters (32 bytes). Multi-merchant disabled.");
+    } else {
+      merchantStore = createMerchantStore({ dbPath: DB_PATH, encryptionKey: keyBuffer });
+      console.log(`Multi-merchant store initialized (${DB_PATH})`);
+    }
+  } catch (err) {
+    console.error("Failed to initialize merchant store:", err);
+  }
+}
+
+const tokenResolver = createTokenResolver({
+  store: merchantStore,
+  fallbackToken: MP_TOKEN,
+});
 
 // ─── Telegram Bot ─────────────────────────────────────────
 const TELEGRAM_ENABLED = !!process.env.TELEGRAM_BOT_TOKEN;
@@ -61,6 +88,8 @@ const waHandler = WA_ENABLED
       successUrl: process.env.MP_SUCCESS_URL,
       allowedPhones: WA_ALLOWED_PHONES,
       appSecret: process.env.WHATSAPP_APP_SECRET,
+      tokenResolver,
+      merchantStore: merchantStore ?? undefined,
     })
   : null;
 
@@ -218,6 +247,7 @@ const server = createServer(async (req, res) => {
       ok: true,
       telegram: TELEGRAM_ENABLED,
       whatsapp: WA_ENABLED,
+      multi_merchant: !!merchantStore,
       mp_webhook: !!mpWebhookHandler,
       mcp_sse: MCP_SSE_ENABLED,
       mcp_sessions: getActiveSessionCount(),
@@ -284,9 +314,21 @@ server.listen(PORT, () => {
   console.log(`Port: ${PORT}`);
   console.log(`Telegram: ${TELEGRAM_ENABLED ? "ON" : "OFF"}`);
   console.log(`WhatsApp: ${WA_ENABLED ? "ON" : "OFF"}`);
+  console.log(`Multi-Merchant: ${merchantStore ? "ON" : "OFF"}`);
   console.log(`MP Webhook: ${mpWebhookHandler ? "ON" : "OFF"}`);
   console.log(`MCP SSE: ${MCP_SSE_ENABLED ? "ON" : "OFF"}`);
   if (WA_NOTIFY_PHONE) console.log(`WA Notifications: ${WA_NOTIFY_PHONE}`);
   console.log(`Health: http://localhost:${PORT}/health`);
   console.log(`================================\n`);
 });
+
+// Graceful shutdown
+function shutdown() {
+  if (merchantStore) {
+    merchantStore.close();
+  }
+  server.close();
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

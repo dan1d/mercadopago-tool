@@ -3,6 +3,8 @@ import { WhatsAppClient } from "./client.js";
 import { extractMessages, parseMessage } from "./message-parser.js";
 import { createCommandHandlers } from "./handlers.js";
 import type { HandlersConfig } from "./handlers.js";
+import type { TokenResolver } from "../db/token-resolver.js";
+import type { MerchantStore } from "../db/merchant-store.js";
 
 export interface WhatsAppWebhookConfig {
   waAccessToken: string;
@@ -13,6 +15,8 @@ export interface WhatsAppWebhookConfig {
   successUrl?: string;
   allowedPhones?: Set<string>;
   appSecret?: string;  // Meta app secret for X-Hub-Signature-256 validation
+  tokenResolver?: TokenResolver;
+  merchantStore?: MerchantStore;
 }
 
 export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
@@ -25,6 +29,8 @@ export function createWhatsAppWebhookHandler(config: WhatsAppWebhookConfig) {
     mpAccessToken: config.mpAccessToken,
     currency: config.currency ?? "ARS",
     successUrl: config.successUrl,
+    tokenResolver: config.tokenResolver,
+    merchantStore: config.merchantStore,
   };
 
   const { handleCommand } = createCommandHandlers(handlersConfig);

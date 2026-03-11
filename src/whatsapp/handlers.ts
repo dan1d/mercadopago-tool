@@ -2,15 +2,30 @@ import { WhatsAppClient } from "./client.js";
 import type { ParsedCommand } from "./message-parser.js";
 import { createMercadoPagoTools } from "../index.js";
 import { statusEmoji, statusLabel, friendlyError } from "../shared/formatting.js";
+import type { TokenResolver } from "../db/token-resolver.js";
+import type { MerchantStore } from "../db/merchant-store.js";
 
 export interface HandlersConfig {
   mpAccessToken: string;
   currency: string;
   successUrl?: string;
+  tokenResolver?: TokenResolver;
+  merchantStore?: MerchantStore;
 }
 
+const ONBOARDING_MSG =
+  "No tienes un token de Mercado Pago configurado.\n\n" +
+  "Para empezar, envia:\nconfigurar <tu_access_token>\n\n" +
+  "Obtene tu Access Token en:\nhttps://www.mercadopago.com.ar/developers/panel/app";
+
 export function createCommandHandlers(config: HandlersConfig) {
-  const mp = createMercadoPagoTools(config.mpAccessToken);
+  function resolveMpTools(phone: string) {
+    const token = config.tokenResolver
+      ? config.tokenResolver.resolve(phone)
+      : config.mpAccessToken;
+    if (!token) return null;
+    return createMercadoPagoTools(token);
+  }
 
   async function handleCommand(
     wa: WhatsAppClient,
@@ -20,6 +35,8 @@ export function createCommandHandlers(config: HandlersConfig) {
     switch (parsed.command) {
       case "ayuda":
         return handleAyuda(wa, phoneNumber);
+      case "configurar":
+        return handleConfigurar(wa, phoneNumber, parsed.args);
       case "cobrar":
         return handleCobrar(wa, phoneNumber, parsed.args);
       case "pagos":
@@ -39,8 +56,46 @@ export function createCommandHandlers(config: HandlersConfig) {
         "pagos\n  Lista ultimos pagos\n\n" +
         "estado <payment_id>\n  Consulta estado de un pago\n\n" +
         "devolver <payment_id> [monto]\n  Devuelve un pago\n\n" +
+        "configurar <access_token>\n  Registra tu token de Mercado Pago\n\n" +
         "ayuda\n  Muestra este mensaje"
     );
+  }
+
+  async function handleConfigurar(wa: WhatsAppClient, phone: string, args: string[]): Promise<void> {
+    if (!config.merchantStore) {
+      await wa.sendMessage(phone, "La configuracion de tokens no esta disponible en este momento.");
+      return;
+    }
+
+    if (args.length < 1) {
+      await wa.sendMessage(
+        phone,
+        "Uso: configurar <tu_access_token>\n\n" +
+          "Obtene tu Access Token en:\nhttps://www.mercadopago.com.ar/developers/panel/app"
+      );
+      return;
+    }
+
+    const token = args[0];
+
+    try {
+      const mp = createMercadoPagoTools(token);
+      const info = (await mp.tools.get_merchant_info()) as {
+        first_name: string;
+        last_name: string;
+      };
+      const name = `${info.first_name} ${info.last_name}`;
+      config.merchantStore.setToken(phone, token, name);
+      await wa.sendMessage(
+        phone,
+        `Token registrado para ${name}.\nYa podes usar los comandos. Envia "ayuda" para verlos.`
+      );
+    } catch {
+      await wa.sendMessage(
+        phone,
+        "Token invalido. Verifica que sea un Access Token valido de Mercado Pago."
+      );
+    }
   }
 
   async function handleCobrar(wa: WhatsAppClient, phone: string, args: string[]): Promise<void> {
@@ -52,6 +107,12 @@ export function createCommandHandlers(config: HandlersConfig) {
     const amount = Number(args[0]);
     if (isNaN(amount) || amount <= 0) {
       await wa.sendMessage(phone, "El monto debe ser un numero positivo.");
+      return;
+    }
+
+    const mp = resolveMpTools(phone);
+    if (!mp) {
+      await wa.sendMessage(phone, ONBOARDING_MSG);
       return;
     }
 
@@ -80,6 +141,12 @@ export function createCommandHandlers(config: HandlersConfig) {
   }
 
   async function handlePagos(wa: WhatsAppClient, phone: string): Promise<void> {
+    const mp = resolveMpTools(phone);
+    if (!mp) {
+      await wa.sendMessage(phone, ONBOARDING_MSG);
+      return;
+    }
+
     try {
       const result = (await mp.tools.search_payments({ limit: 5 })) as {
         results: Array<{
@@ -114,6 +181,12 @@ export function createCommandHandlers(config: HandlersConfig) {
       return;
     }
 
+    const mp = resolveMpTools(phone);
+    if (!mp) {
+      await wa.sendMessage(phone, ONBOARDING_MSG);
+      return;
+    }
+
     try {
       const payment = (await mp.tools.get_payment({ payment_id: args[0] })) as {
         id: number;
@@ -145,6 +218,12 @@ export function createCommandHandlers(config: HandlersConfig) {
   async function handleDevolver(wa: WhatsAppClient, phone: string, args: string[]): Promise<void> {
     if (args.length < 1) {
       await wa.sendMessage(phone, "Uso: devolver <payment_id> [monto]\nEjemplo: devolver 123456789");
+      return;
+    }
+
+    const mp = resolveMpTools(phone);
+    if (!mp) {
+      await wa.sendMessage(phone, ONBOARDING_MSG);
       return;
     }
 

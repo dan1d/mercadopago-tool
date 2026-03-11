@@ -330,15 +330,17 @@ describe("server.ts — full config (all features enabled)", () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
     await import("../src/server.js");
 
-    expect(mockCreateWhatsAppWebhookHandler).toHaveBeenCalledWith({
-      waAccessToken: "wa-token",
-      waPhoneNumberId: "wa-phone-id",
-      verifyToken: "wa-verify",
-      mpAccessToken: "TEST_MP_TOKEN",
-      currency: "USD",
-      successUrl: "https://example.com/success",
-      allowedPhones: new Set(["+5491100001111", "+5491100002222"]),
-    });
+    expect(mockCreateWhatsAppWebhookHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        waAccessToken: "wa-token",
+        waPhoneNumberId: "wa-phone-id",
+        verifyToken: "wa-verify",
+        mpAccessToken: "TEST_MP_TOKEN",
+        currency: "USD",
+        successUrl: "https://example.com/success",
+        allowedPhones: new Set(["+5491100001111", "+5491100002222"]),
+      })
+    );
   });
 
   it("creates MP webhook handler with access token and secret", async () => {

@@ -49,6 +49,20 @@ describe("parseMessage", () => {
     });
   });
 
+  it("parses configurar command with token arg", () => {
+    expect(parseMessage("configurar APP_USR-my-token")).toEqual({
+      command: "configurar",
+      args: ["APP_USR-my-token"],
+    });
+  });
+
+  it("parses configurar with slash prefix", () => {
+    expect(parseMessage("/configurar TOKEN123")).toEqual({
+      command: "configurar",
+      args: ["TOKEN123"],
+    });
+  });
+
   it("returns null for unknown commands", () => {
     expect(parseMessage("hola que tal")).toBeNull();
   });

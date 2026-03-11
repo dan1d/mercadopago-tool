@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { WhatsAppClient } from "../src/whatsapp/client.js";
 import { createCommandHandlers, createPaymentNotifier } from "../src/whatsapp/handlers.js";
 import type { ParsedCommand } from "../src/whatsapp/message-parser.js";
+import type { MerchantStore } from "../src/db/merchant-store.js";
+import type { TokenResolver } from "../src/db/token-resolver.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -219,5 +221,218 @@ describe("createPaymentNotifier", () => {
 
     await notifier({ id: 1, status: "pending", transaction_amount: 100 });
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+// --- Multi-merchant tests ---
+
+function mockMerchantStore(tokens: Record<string, { token: string; name: string }> = {}): MerchantStore {
+  const data = new Map(Object.entries(tokens));
+  return {
+    getToken: (phone: string) => data.get(phone)?.token ?? null,
+    getMerchant: (phone: string) => {
+      const d = data.get(phone);
+      if (!d) return null;
+      return { phone, merchantName: d.name, createdAt: "", updatedAt: "" };
+    },
+    setToken: (phone: string, token: string, name: string) => {
+      data.set(phone, { token, name });
+    },
+    removeToken: (phone: string) => data.delete(phone),
+    hasToken: (phone: string) => data.has(phone),
+    listMerchants: () => [],
+    getRawEncryptedToken: () => null,
+    close: () => {},
+  };
+}
+
+function mockResolver(tokens: Record<string, string>, fallback = ""): TokenResolver {
+  return {
+    resolve: (phone: string) => tokens[phone] ?? (fallback || null),
+  };
+}
+
+describe("configurar command", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("sends usage when no args", async () => {
+    const store = mockMerchantStore();
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      merchantStore: store,
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "configurar", args: [] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Uso: configurar"));
+  });
+
+  it("validates token by calling /users/me and stores on success", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({
+      first_name: "Maria",
+      last_name: "Lopez",
+    }));
+
+    const store = mockMerchantStore();
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      merchantStore: store,
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "configurar", args: ["APP_USR-valid-token"] });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.mercadopago.com/users/me",
+      expect.anything()
+    );
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Maria Lopez"));
+    expect(store.getToken("549111")).toBe("APP_USR-valid-token");
+  });
+
+  it("rejects invalid token (API returns 401)", async () => {
+    mockFetch.mockResolvedValueOnce(new Response("Unauthorized", { status: 401 }));
+
+    const store = mockMerchantStore();
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      merchantStore: store,
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "configurar", args: ["bad-token"] });
+
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Token invalido"));
+    expect(store.getToken("549111")).toBeNull();
+  });
+
+  it("sends not available when merchantStore is not configured", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "MP_TOKEN",
+      currency: "ARS",
+      // no merchantStore
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "configurar", args: ["some-token"] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("no esta disponible"));
+  });
+});
+
+describe("onboarding (no token)", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("sends onboarding for cobrar when no token resolved", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      tokenResolver: mockResolver({}),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "cobrar", args: ["5000", "test"] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("configurar"));
+  });
+
+  it("sends onboarding for pagos when no token resolved", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      tokenResolver: mockResolver({}),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "pagos", args: [] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("configurar"));
+  });
+
+  it("sends onboarding for estado when no token resolved", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      tokenResolver: mockResolver({}),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "estado", args: ["123"] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("configurar"));
+  });
+
+  it("sends onboarding for devolver when no token resolved", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      tokenResolver: mockResolver({}),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "devolver", args: ["123"] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("configurar"));
+  });
+
+  it("ayuda always works even without token", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "",
+      currency: "ARS",
+      tokenResolver: mockResolver({}),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "ayuda", args: [] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("Comandos disponibles"));
+  });
+});
+
+describe("per-merchant token resolution", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("uses merchant-specific token for cobrar", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({
+      id: "pref_merchant",
+      init_point: "https://mp.com/checkout/pref_merchant",
+    }));
+
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "GLOBAL_TOKEN",
+      currency: "ARS",
+      tokenResolver: mockResolver({ "549222": "MERCHANT_TOKEN" }, "GLOBAL_TOKEN"),
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549222", { command: "cobrar", args: ["1000", "mi producto"] });
+
+    // Verify the fetch was called with the merchant token (in Authorization header)
+    const fetchCall = mockFetch.mock.calls[0];
+    const headers = fetchCall[1].headers;
+    expect(headers.Authorization).toBe("Bearer MERCHANT_TOKEN");
+    expect(spy).toHaveBeenCalledWith("549222", expect.stringContaining("pref_merchant"));
+  });
+
+  it("uses fallback token when merchant has no registered token", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({
+      id: "pref_fallback",
+      init_point: "https://mp.com/checkout/pref_fallback",
+    }));
+
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "GLOBAL_TOKEN",
+      currency: "ARS",
+      tokenResolver: mockResolver({}, "GLOBAL_TOKEN"),
+    });
+    const { wa } = createMockWa();
+    await handleCommand(wa, "549333", { command: "cobrar", args: ["2000", "servicio"] });
+
+    const fetchCall = mockFetch.mock.calls[0];
+    const headers = fetchCall[1].headers;
+    expect(headers.Authorization).toBe("Bearer GLOBAL_TOKEN");
+  });
+
+  it("help text includes configurar command", async () => {
+    const { handleCommand } = createCommandHandlers({
+      mpAccessToken: "MP_TOKEN",
+      currency: "ARS",
+    });
+    const { wa, spy } = createMockWa();
+    await handleCommand(wa, "549111", { command: "ayuda", args: [] });
+    expect(spy).toHaveBeenCalledWith("549111", expect.stringContaining("configurar"));
   });
 });

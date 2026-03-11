@@ -1,4 +1,4 @@
-export type CommandName = "cobrar" | "pagos" | "estado" | "devolver" | "ayuda";
+export type CommandName = "cobrar" | "pagos" | "estado" | "devolver" | "ayuda" | "configurar";
 
 export interface ParsedCommand {
   command: CommandName;
@@ -12,6 +12,7 @@ const VALID_COMMANDS: ReadonlySet<string> = new Set([
   "devolver",
   "ayuda",
   "help",
+  "configurar",
 ]);
 
 export function parseMessage(text: string): ParsedCommand | null {
