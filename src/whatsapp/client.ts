@@ -1,4 +1,4 @@
-const GRAPH_API_BASE = "https://graph.facebook.com/v18.0";
+const GRAPH_API_BASE = "https://graph.facebook.com/v22.0";
 
 export interface WhatsAppClientConfig {
   accessToken: string;

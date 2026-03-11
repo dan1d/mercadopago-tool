@@ -65,7 +65,7 @@ mercadopago-tool/
 │   ├── server.ts              # Unified HTTP server (all webhooks + health)
 │   ├── global.d.ts            # Global type declarations (fetch)
 │   └── whatsapp/
-│       ├── client.ts          # WhatsAppClient (Meta Graph API v18.0)
+│       ├── client.ts          # WhatsAppClient (Meta Graph API v22.0)
 │       ├── message-parser.ts  # Command parser + webhook payload extractor
 │       ├── handlers.ts        # Command handlers + payment notifier
 │       └── webhook.ts         # GET verify + POST handler + re-exports

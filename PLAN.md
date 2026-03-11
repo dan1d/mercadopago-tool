@@ -22,7 +22,7 @@
 - [x] 75 tests total
 
 ### Phase 3: WhatsApp Business
-- [x] WhatsAppClient for Meta Graph API v18.0
+- [x] WhatsAppClient for Meta Graph API v22.0
 - [x] Message parser (cobrar, pagos, estado, devolver, ayuda)
 - [x] Command handlers with shared MP tools
 - [x] WhatsApp webhook (GET verify + POST messages)

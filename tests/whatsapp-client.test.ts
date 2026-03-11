@@ -40,7 +40,7 @@ describe("WhatsAppClient", () => {
     await client.sendMessage("5491155551234", "Hola mundo");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://graph.facebook.com/v18.0/PHONE_ID_1/messages",
+      "https://graph.facebook.com/v22.0/PHONE_ID_1/messages",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
