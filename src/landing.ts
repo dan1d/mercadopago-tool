@@ -108,7 +108,8 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
 <nav>
   <div class="container">
     <div class="logo">CobroYa</div>
-    <a href="https://t.me/CobroYa_bot" class="nav-cta">Probar gratis</a>
+    <a href="https://wa.me/5493815767647?text=ayuda" class="nav-cta" style="background:var(--green);margin-right:8px">WhatsApp</a>
+    <a href="https://t.me/CobroYa_bot" class="nav-cta">Telegram</a>
   </div>
 </nav>
 
@@ -118,7 +119,8 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
     <h1>Cobra con Mercado Pago<br>en 10 segundos</h1>
     <p class="subtitle">Genera links de pago desde Telegram o WhatsApp. Sin web, sin codigo, sin complicaciones. Escribi un mensaje y listo.</p>
     <div class="hero-ctas">
-      <a href="https://t.me/CobroYa_bot" class="btn-primary">Empezar con Telegram</a>
+      <a href="https://wa.me/5493815767647?text=ayuda" class="btn-primary" style="background:linear-gradient(135deg,#22c55e,#16a34a)">Empezar por WhatsApp</a>
+      <a href="https://t.me/CobroYa_bot" class="btn-primary">Empezar por Telegram</a>
       <a href="#como-funciona" class="btn-secondary">Ver como funciona</a>
     </div>
   </div>
@@ -126,13 +128,23 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
 
 <section class="demo">
   <div class="container">
-    <div class="demo-box">
-      <div class="demo-label">Telegram - @CobroYa_bot</div>
-      <div class="demo-line"><span class="demo-user">Tu:</span> /cobrar 5000 Clase de guitarra</div>
-      <div class="demo-line"><span class="demo-bot">CobroYa:</span> Link de pago creado!</div>
-      <div class="demo-line" style="padding-left:24px"><span class="demo-link">mercadopago.com.ar/checkout/...</span></div>
-      <div style="border-top:1px solid #27272a;margin:16px 0"></div>
-      <div class="demo-line"><span class="demo-bot">CobroYa:</span> Pago recibido - $5.000</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;max-width:960px;margin:0 auto">
+      <div class="demo-box">
+        <div class="demo-label" style="color:#22c55e">WhatsApp - +54 9 381 576 7647</div>
+        <div class="demo-line"><span class="demo-user">Tu:</span> cobrar 5000 Clase de guitarra</div>
+        <div class="demo-line"><span class="demo-bot">CobroYa:</span> Link de pago creado!</div>
+        <div class="demo-line" style="padding-left:24px"><span class="demo-link">mercadopago.com.ar/checkout/...</span></div>
+        <div style="border-top:1px solid #27272a;margin:16px 0"></div>
+        <div class="demo-line"><span class="demo-bot">CobroYa:</span> Pago recibido - $5.000</div>
+      </div>
+      <div class="demo-box">
+        <div class="demo-label" style="color:#3b82f6">Telegram - @CobroYa_bot</div>
+        <div class="demo-line"><span class="demo-user">Tu:</span> /cobrar 5000 Clase de guitarra</div>
+        <div class="demo-line"><span class="demo-bot">CobroYa:</span> Link de pago creado!</div>
+        <div class="demo-line" style="padding-left:24px"><span class="demo-link">mercadopago.com.ar/checkout/...</span></div>
+        <div style="border-top:1px solid #27272a;margin:16px 0"></div>
+        <div class="demo-line"><span class="demo-bot">CobroYa:</span> Pago recibido - $5.000</div>
+      </div>
     </div>
   </div>
 </section>
@@ -182,7 +194,7 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
     <div class="steps">
       <div class="step">
         <h3>Abri el bot</h3>
-        <p>Busca @CobroYa_bot en Telegram o escribinos por WhatsApp</p>
+        <p>Escribi al +54 9 381 576 7647 por WhatsApp o busca @CobroYa_bot en Telegram</p>
       </div>
       <div class="step">
         <h3>Genera tu link</h3>
@@ -211,11 +223,11 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
         <p class="price-desc">Para probar y empezar</p>
         <ul class="price-features">
           <li>Hasta 20 links por mes</li>
-          <li>Telegram</li>
+          <li>Telegram + WhatsApp</li>
           <li>Notificaciones de pago</li>
           <li>Historial de pagos</li>
         </ul>
-        <a href="https://t.me/CobroYa_bot" class="price-btn secondary">Empezar gratis</a>
+        <a href="https://wa.me/5493815767647?text=ayuda" class="price-btn secondary">Empezar gratis</a>
       </div>
       <div class="price-card featured">
         <h3>Pro</h3>
@@ -228,7 +240,7 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
           <li>Devoluciones desde el chat</li>
           <li>Soporte prioritario</li>
         </ul>
-        <a href="https://t.me/CobroYa_bot" class="price-btn primary">Comenzar ahora</a>
+        <a href="https://wa.me/5493815767647?text=ayuda" class="price-btn primary">Comenzar ahora</a>
       </div>
     </div>
   </div>
@@ -237,8 +249,11 @@ footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;color
 <section class="final-cta">
   <div class="container">
     <h2>Empeza a cobrar hoy</h2>
-    <p>No necesitas web, no necesitas saber programar.<br>Solo tu Telegram y tu cuenta de Mercado Pago.</p>
-    <a href="https://t.me/CobroYa_bot" class="btn-primary">Abrir CobroYa en Telegram</a>
+    <p>No necesitas web, no necesitas saber programar.<br>Solo WhatsApp (o Telegram) y tu cuenta de Mercado Pago.</p>
+    <div class="hero-ctas">
+      <a href="https://wa.me/5493815767647?text=ayuda" class="btn-primary" style="background:linear-gradient(135deg,#22c55e,#16a34a)">Abrir en WhatsApp</a>
+      <a href="https://t.me/CobroYa_bot" class="btn-primary">Abrir en Telegram</a>
+    </div>
   </div>
 </section>
 
